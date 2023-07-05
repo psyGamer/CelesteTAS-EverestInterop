@@ -3357,7 +3357,7 @@ public class RichText : UserControl {
                 using var lineNumberBrush = new SolidBrush(currentTextColor);
                 SizeF size = e.Graphics.MeasureString(currentLineSuffix, Font, 0, StringFormat.GenericTypographic);
                 e.Graphics.DrawString(currentLineSuffix, Font, lineNumberBrush,
-                    new RectangleF(ClientSize.Width - size.Width - 10, y, size.Width, CharHeight), StringFormat.GenericTypographic);
+                    new RectangleF(ClientSize.Width - size.Width - 20, y, size.Width, CharHeight), StringFormat.GenericTypographic);
             }
 
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;

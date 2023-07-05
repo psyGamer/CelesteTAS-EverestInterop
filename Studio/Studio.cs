@@ -19,7 +19,7 @@ using StudioCommunication;
 namespace CelesteStudio;
 
 public partial class Studio : BaseForm {
-    private const string MaxStatusHeight20Line = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+    private const string MaxStatusHeight20Line = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n.";
     public static Studio Instance;
     public static Version Version { get; private set; }
     private static List<string> RecentFiles => Settings.Instance.RecentFiles;
