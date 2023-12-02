@@ -3,7 +3,7 @@ name: NetFramework.Legacy.CI
 on:
   push:
     branches:
-      - master
+      - '*'
     tags-ignore:
       - '*'
     paths-ignore:
