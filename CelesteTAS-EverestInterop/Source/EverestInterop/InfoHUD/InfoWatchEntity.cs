@@ -256,7 +256,7 @@ public static class InfoWatchEntity {
                 value = value.ToString().ReplaceLineBreak(" ");
             }
 
-            return $"{type.Name}{entityId}.{info.Name}: {value}";
+            return $"{type.FullName}{entityId}.{info.Name}: {value}";
         }).ToList();
 
         values.Insert(0, GetPositionInfo(entity, entityId, decimals));
