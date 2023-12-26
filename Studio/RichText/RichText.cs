@@ -9,6 +9,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Windows.Forms;
 using CelesteStudio.Entities;
 using StudioCommunication;
@@ -1710,7 +1711,20 @@ public class RichText : UserControl {
     public void Paste() {
         string text = null;
         if (Clipboard.ContainsText()) {
-            text = Clipboard.GetText();
+            int attemptsLeft = 5;
+            
+            while (attemptsLeft > 0) {
+                try { 
+                    text = Clipboard.GetText();
+                    break;
+                } catch (Exception ex) {
+                    Console.WriteLine($"FAILED TO GET CLIPBOARD CONTENT! TRYING {attemptsLeft} TIMES");
+                    Console.WriteLine(ex);
+                    Thread.Sleep(10);
+                    
+                    attemptsLeft--;   
+                }
+            }
         }
 
         if (text != null) {
