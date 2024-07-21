@@ -204,14 +204,6 @@ public static class CommunicationWrapper {
         Clipboard.Instance.Text = customInfoTemplate;
     }
 
-    public static void SetCustomInfoTemplate(string template) {
-        if (!Connected) {
-            return;
-        }
-
-        comm!.SendCustomInfoTemplate(template);
-    }
-
     public static void SetCustomInfoTemplateFromClipboard() {
         if (!Connected) {
             return;

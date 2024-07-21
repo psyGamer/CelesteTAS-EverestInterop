@@ -93,7 +93,7 @@ public sealed class CommunicationAdapterStudio(
                         gameData[gameDataType] = reader.ReadObject<CommandAutoCompleteEntry[]>();
                         break;
                     case GameDataType.RawInfo:
-                        gameData[gameDataType] = BinaryHelper.DeserializeObject(gameDataObjType, reader);
+                        gameData[gameDataType] = BinaryHelper.ReadObject(reader, gameDataObjType);
                         break;
                 }
                 
@@ -138,8 +138,9 @@ public sealed class CommunicationAdapterStudio(
     }
 
     private static readonly TimeSpan DefaultRequestTimeout = TimeSpan.FromSeconds(1);
-    public async Task<object?> RequestGameData(GameDataType gameDataType, object? arg = null, TimeSpan? timeout = null) {
+    public async Task<object?> RequestGameData(GameDataType gameDataType, object? arg = null, TimeSpan? timeout = null, Type? type = null) {
         timeout ??= DefaultRequestTimeout;
+        gameDataObjType = type ?? typeof(string);
         
         if (gameData[gameDataType] != null) {
             // Wait for another request to finish

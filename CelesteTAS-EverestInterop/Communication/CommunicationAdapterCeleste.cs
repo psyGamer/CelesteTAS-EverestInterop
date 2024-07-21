@@ -159,7 +159,8 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
                                         writer.WriteObject((CommandAutoCompleteEntry[])gameData);
                                         break;
                                     case GameDataType.RawInfo:
-                                        BinaryHelper.SerializeObject(gameData, writer);
+                                        BinaryHelper.WriteObject(writer, gameData);
+                                        break;
                                 }
                                 LogVerbose($"Sent message GameDataResponse: {gameDataType} = '{gameData}'");    
                             });
