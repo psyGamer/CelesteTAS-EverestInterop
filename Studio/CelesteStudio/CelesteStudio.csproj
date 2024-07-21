@@ -8,27 +8,24 @@
         <Version>3.0.0</Version>
 
         <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
-        <DefaultItemExcludes>Tool/Featherline_Studiov3/**</DefaultItemExcludes>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Eto.Forms" Version="2.8.3" />
         <PackageReference Include="Samboy063.Tomlet" Version="5.3.1" />
+
+        <ProjectReference Include="..\..\external\Featherline\Featherline.csproj" />
     </ItemGroup>
 
     <Import Project="..\..\StudioCommunication\StudioCommunication.targets" />
     
     <ItemGroup>
-        <EmbeddedResource Include="Assets\Icon.ico" LogicalName="Icon.ico" />
-        
-        <EmbeddedResource Include="Assets\JetBrainsMono\JetBrainsMonoNL-Regular.otf" LogicalName="JetBrainsMono/JetBrainsMono-Regular.otf" />
-        <EmbeddedResource Include="Assets\JetBrainsMono\JetBrainsMonoNL-Bold.otf" LogicalName="JetBrainsMono/JetBrainsMono-Bold.otf" />
-        <EmbeddedResource Include="Assets\JetBrainsMono\JetBrainsMonoNL-Italic.otf" LogicalName="JetBrainsMono/JetBrainsMono-Italic.otf" />
-        <EmbeddedResource Include="Assets\JetBrainsMono\JetBrainsMonoNL-BoldItalic.otf" LogicalName="JetBrainsMono/JetBrainsMono-BoldItalic.otf" />
-    </ItemGroup>
+        <EmbeddedResource Include="Assets\Icon.ico" LogicalName="Icon.ico"/>
 
-    <ItemGroup>
-      <ProjectReference Include="Tool\Featherline_StudioV3\Featherline.csproj" />
+        <EmbeddedResource Include="Assets\JetBrainsMono\JetBrainsMonoNL-Regular.otf" LogicalName="JetBrainsMono/JetBrainsMono-Regular.otf"/>
+        <EmbeddedResource Include="Assets\JetBrainsMono\JetBrainsMonoNL-Bold.otf" LogicalName="JetBrainsMono/JetBrainsMono-Bold.otf"/>
+        <EmbeddedResource Include="Assets\JetBrainsMono\JetBrainsMonoNL-Italic.otf" LogicalName="JetBrainsMono/JetBrainsMono-Italic.otf"/>
+        <EmbeddedResource Include="Assets\JetBrainsMono\JetBrainsMonoNL-BoldItalic.otf" LogicalName="JetBrainsMono/JetBrainsMono-BoldItalic.otf"/>
     </ItemGroup>
 
 </Project>

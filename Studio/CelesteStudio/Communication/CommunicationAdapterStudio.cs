@@ -17,7 +17,7 @@ public sealed class CommunicationAdapterStudio(
     Action<Dictionary<HotkeyID, List<WinFormsKeys>>> bindingsChanged) : CommunicationAdapterBase(Location.Studio) 
 {
     private readonly EnumDictionary<GameDataType, object?> gameData = new();
-    private Type gameDataObjType;
+    private readonly EnumDictionary<GameDataType, Type?> gameDataTargetType = new();
     
     public void ForceReconnect() {
         if (Connected) {
@@ -92,8 +92,10 @@ public sealed class CommunicationAdapterStudio(
                     case GameDataType.InvokeCommandAutoCompleteEntries:
                         gameData[gameDataType] = reader.ReadObject<CommandAutoCompleteEntry[]>();
                         break;
+                    
                     case GameDataType.RawInfo:
-                        gameData[gameDataType] = BinaryHelper.ReadObject(reader, gameDataObjType);
+                        Console.WriteLine($"Type: {gameDataTargetType[GameDataType.RawInfo]}");
+                        gameData[gameDataType] = reader.ReadObject(gameDataTargetType[GameDataType.RawInfo]!);
                         break;
                 }
                 
@@ -120,7 +122,9 @@ public sealed class CommunicationAdapterStudio(
     public void SendSetting(string settingName, object? value) {
         QueueMessage(MessageID.SetSetting, writer => {
             writer.Write(settingName);
-            writer.WriteObject(value);
+            if (value != null) {
+                writer.WriteObject(value);
+            }
         });
         LogVerbose($"Sent message SetSetting: '{settingName}' = '{value}");
     }
@@ -155,6 +159,7 @@ public sealed class CommunicationAdapterStudio(
             }
         }
         
+        gameDataTargetType[gameDataType] = type;
         QueueMessage(MessageID.RequestGameData, writer => {
             writer.Write((byte)gameDataType);
             if (arg != null) {

@@ -133,21 +133,21 @@ public static class CommunicationWrapper {
             return string.Empty;
         }
         
-        return (string)(comm!.RequestGameData(GameDataType.ConsoleCommand, simple).Result ?? string.Empty);
+        return (string?)comm!.RequestGameData(GameDataType.ConsoleCommand, simple).Result ?? string.Empty;
     }
     public static string GetModURL() {
         if (!Connected) {
             return string.Empty;
         }
         
-        return (string)(comm!.RequestGameData(GameDataType.ModUrl).Result ?? string.Empty);
+        return (string?)comm!.RequestGameData(GameDataType.ModUrl).Result ?? string.Empty;
     }
     public static string GetModInfo() {
         if (!Connected) {
             return string.Empty;
         }
         
-        return (string)(comm!.RequestGameData(GameDataType.ModInfo).Result ?? string.Empty);
+        return (string?)comm!.RequestGameData(GameDataType.ModInfo).Result ?? string.Empty;
     }
     public static string GetExactGameInfo() {
         if (!Connected) {
@@ -157,11 +157,12 @@ public static class CommunicationWrapper {
         return (string?)comm!.RequestGameData(GameDataType.ExactGameInfo).Result ?? string.Empty;
     }
 
-    public static T GetRawData<T>(string template, bool alwaysList = false) {
+    public static T? GetRawData<T>(string template, bool alwaysList = false) {
         if (!Connected) {
             return default;
         }
-        return (T)comm!.RequestGameData(GameDataType.RawInfo, (template, alwaysList), null, typeof(T)).Result ?? default;
+
+        return (T?)comm!.RequestGameData(GameDataType.RawInfo, (template, alwaysList), TimeSpan.FromSeconds(15), typeof(T)).Result ?? default;
     }
     
     private static async Task<CommandAutoCompleteEntry[]> RequestAutoCompleteEntries(GameDataType gameDataType, string argsText, int index) {
@@ -178,7 +179,7 @@ public static class CommunicationWrapper {
     #endregion
     
     #region Actions
-    
+
     public static string GetCustomInfoTemplate() {
         if (!Connected) {
             return string.Empty;
