@@ -136,7 +136,7 @@ public sealed class FeatherlineForm : Form {
 
     private void GetInfo() {
         run.Enabled = false;
-        Featherline.Settings.Info = new List<object>() {
+        /*Featherline.Settings.Info = new List<object>() {
             CommunicationWrapper.GetRawData<(float, float)>("Player.Speed"), // Speed
             CommunicationWrapper.GetRawData<(float, float)>("Player.Position"), // Pos
             CommunicationWrapper.GetRawData<(float, float)>("Player.PositionRemainder"), // PosRemainder
@@ -173,7 +173,7 @@ public sealed class FeatherlineForm : Form {
             CommunicationWrapper.GetRawData<int>("Level.Bounds.Width"),
             CommunicationWrapper.GetRawData<int>("Level.Bounds.Height"),
             CommunicationWrapper.GetRawData<string>("Level.Session.LevelData.Solids"), // Solids
-        };
+        };*/
         run.Enabled = true;
     }
 

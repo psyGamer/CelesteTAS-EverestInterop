@@ -144,7 +144,6 @@ public sealed class CommunicationAdapterStudio(
     private static readonly TimeSpan DefaultRequestTimeout = TimeSpan.FromSeconds(1);
     public async Task<object?> RequestGameData(GameDataType gameDataType, object? arg = null, TimeSpan? timeout = null, Type? type = null) {
         timeout ??= DefaultRequestTimeout;
-        gameDataObjType = type ?? typeof(string);
         
         if (gameData[gameDataType] != null) {
             // Wait for another request to finish
