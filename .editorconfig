@@ -590,8 +590,8 @@ resharper_stick_comment = true
 resharper_support_vs_event_naming_pattern = true
 resharper_toplevel_function_declaration_return_type_style = do_not_change
 resharper_toplevel_function_definition_return_type_style = do_not_change
-resharper_trailing_comma_in_multiline_lists = false
-resharper_trailing_comma_in_singleline_lists = false
+resharper_trailing_comma_in_multiline_lists = true
+resharper_trailing_comma_in_singleline_lists = true
 resharper_use_continuous_indent_inside_initializer_braces = true
 resharper_use_continuous_indent_inside_parens = true
 resharper_use_continuous_line_indent_in_expression_braces = false
@@ -3562,7 +3562,7 @@ resharper_xaml_xaml_unknown_device_family_type_highlighting_highlighting = warni
 resharper_xaml_xaml_xamarin_forms_data_type_and_binding_context_type_mismatched_highlighting_highlighting = warning
 resharper_xaml_x_key_attribute_disallowed_highlighting = error
 resharper_xunit_xunit_test_with_console_output_highlighting = warning
-trim_trailing_whitespace = false
+trim_trailing_whitespace = true
 
 [{*.yaml, *.yml}]
 indent_style = space

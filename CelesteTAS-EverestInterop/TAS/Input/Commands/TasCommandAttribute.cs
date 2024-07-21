@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Celeste.Mod;
+using JetBrains.Annotations;
 using TAS.Module;
 using TAS.Utils;
 
@@ -14,7 +15,7 @@ namespace TAS.Input.Commands;
  * The args field should list formats the command takes. This is not currently used but may be implemented into Studio in the future.
  * Commands that execute can be void Command(string[], InputController, int) or void Command(string[]) or void Command().
  */
-[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true), MeansImplicitUse]
 public class TasCommandAttribute : Attribute {
     private static readonly IDictionary<TasCommandAttribute, MethodInfo> MethodInfos = new Dictionary<TasCommandAttribute, MethodInfo>();
     public string[] AliasNames;
