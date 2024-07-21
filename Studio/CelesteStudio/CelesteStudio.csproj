@@ -16,6 +16,8 @@
         <PackageReference Include="Samboy063.Tomlet" Version="5.3.1" />
     </ItemGroup>
 
+    <Import Project="..\..\StudioCommunication\StudioCommunication.targets" />
+    
     <ItemGroup>
         <EmbeddedResource Include="Assets\Icon.ico" LogicalName="Icon.ico" />
         
@@ -28,8 +30,5 @@
     <ItemGroup>
       <ProjectReference Include="Tool\Featherline_StudioV3\Featherline.csproj" />
     </ItemGroup>
-
-    <Import Project="..\..\StudioCommunication\StudioCommunication.projitems" Label="Shared" />
-    
 
 </Project>

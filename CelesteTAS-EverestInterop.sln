@@ -5,7 +5,9 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CelesteTAS-EverestInterop", "CelesteTAS-EverestInterop\CelesteTAS-EverestInterop.csproj", "{12CEFB4D-5E61-4F7E-93A6-637D96AB0139}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CelesteStudio.GTK", "Studio\CelesteStudio.GTK\CelesteStudio.GTK.csproj", "{EC404784-4D2E-4A49-AA0E-F19400998C69}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CelesteStudio", "Studio\CelesteStudio\CelesteStudio.csproj", "{21DF3C27-EF12-45E4-9211-56D7AE0D6BD8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CelesteStudio.GTK", "Studio\CelesteStudio.GTK\CelesteStudio.GTK.csproj", "{EC404784-4D2E-4A49-AA0E-F19400998C69}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CelesteStudio.Mac", "Studio\CelesteStudio.Mac\CelesteStudio.Mac.csproj", "{FA6B0E7D-C70A-4ED5-99E2-019C9B60E52C}"
 EndProject
