@@ -92,7 +92,7 @@ internal static class FastReflection {
 internal static class ReflectionExtensions {
     internal const BindingFlags InstanceAnyVisibility =
         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-    
+
     internal const BindingFlags StaticAnyVisibility =
         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
 
@@ -385,7 +385,7 @@ internal static class TypeExtensions {
 }
 
 internal static class PropertyInfoExtensions {
-    public static bool IsStatic(this PropertyInfo source, bool nonPublic = true) 
+    public static bool IsStatic(this PropertyInfo source, bool nonPublic = true)
         => source.GetAccessors(nonPublic).Any(x => x.IsStatic);
 }
 
@@ -399,7 +399,7 @@ internal static class CommonExtensions {
 // https://github.com/NoelFB/Foster/blob/main/Framework/Extensions/EnumExt.cs
 internal static class EnumExtensions {
     /// <summary>
-    /// Enum.Has boxes the value, where as this method does not.
+    /// Enum.HasFlag boxes the value, whereas this method does not.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe bool Has<TEnum>(this TEnum lhs, TEnum rhs) where TEnum : unmanaged, Enum {
@@ -549,7 +549,7 @@ internal static class NumberExtensions {
             return value.ToString($"F{decimals}");
         }
     }
-    
+
     public static long SecondsToTicks(this float seconds) {
         // .NET Framework rounded TimeSpan.FromSeconds to the nearest millisecond.
         // See: https://github.com/EverestAPI/Everest/blob/dev/NETCoreifier/Patches/TimeSpan.cs
@@ -572,7 +572,7 @@ internal static class Vector2Extensions {
     public static string ToSimpleString(this Vector2 vector2, int decimals) {
         return $"{vector2.X.ToFormattedString(decimals)}, {vector2.Y.ToFormattedString(decimals)}";
     }
-    
+
     public static (float X, float Y) ToTuple(this Vector2 v) => (v.X, v.Y);
 }
 
@@ -716,7 +716,7 @@ internal static class CloneUtil {
         foreach (FieldInfo fieldInfo in to.GetType().GetAllFieldInfos()) {
             object fromValue = fieldInfo.GetValue(from);
             if (onlyDifferent && fromValue == fieldInfo.GetValue(to)) {
-                continue; 
+                continue;
             }
 
             fieldInfo.SetValue(to, fromValue);
@@ -735,9 +735,9 @@ internal static class CloneUtil {
 
             object fromValue = propertyInfo.GetValue(from);
             if (onlyDifferent && fromValue == propertyInfo.GetValue(to)) {
-               continue; 
+               continue;
             }
-           
+
             propertyInfo.SetValue(to, fromValue);
         }
     }

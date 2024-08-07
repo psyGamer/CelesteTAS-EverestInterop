@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using CelesteStudio.Util;
+using StudioCommunication;
 
 namespace CelesteStudio.Editing;
 
@@ -36,7 +36,7 @@ public static class CalculationExtensions {
             _ => throw new UnreachableException(),
         };
     }
-    
+
     public static CalculationOperator Inverse(this CalculationOperator op) {
         return op switch {
             CalculationOperator.Add => CalculationOperator.Sub,

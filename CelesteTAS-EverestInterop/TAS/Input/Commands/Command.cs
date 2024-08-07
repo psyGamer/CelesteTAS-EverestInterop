@@ -83,11 +83,12 @@ public partial record Command {
                     Parsing = false;
                 }
 
-                if (!inputController.Commands.TryGetValue(frame, out List<Command> commands)) {
-                    inputController.Commands[frame] = commands = new List<Command>();
-                }
+                // TODO:
+                // if (!inputController.Commands.TryGetValue(frame, out List<Command> commands)) {
+                //     inputController.Commands[frame] = commands = new List<Command>();
+                // }
 
-                commands.Add(command);
+                // commands.Add(command);
 
                 return true;
             }

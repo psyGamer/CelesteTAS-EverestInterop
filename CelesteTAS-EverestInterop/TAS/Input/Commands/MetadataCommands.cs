@@ -71,9 +71,10 @@ public static class MetadataCommands {
     [TasCommand("MidwayFileTime", AliasNames = new[] {"MidwayFileTime:", "MidwayFileTime："}, CalcChecksum = false)]
     private static void MidwayFileTimeCommand() {
         if (TasStartFileTime != null && SaveData.Instance != null) {
-            UpdateAllMetadata("MidwayFileTime", 
-                _ => GameInfo.FormatTime(SaveData.Instance.Time - TasStartFileTime.Value), 
-                command => Manager.Controller.CurrentCommands.Contains(command));
+            // TODO
+            // UpdateAllMetadata("MidwayFileTime",
+            //     _ => GameInfo.FormatTime(SaveData.Instance.Time - TasStartFileTime.Value),
+            //     command => Manager.Controller.CurrentCommands.Contains(command));
         }
     }
 
@@ -82,9 +83,10 @@ public static class MetadataCommands {
         if (!Manager.Running || Engine.Scene is not Level level || !level.Session.StartedFromBeginning) {
             return;
         }
-        UpdateAllMetadata("MidwayChapterTime", 
-            _ => GameInfo.GetChapterTime(level), 
-            command => Manager.Controller.CurrentCommands.Contains(command));
+        // TODO
+        // UpdateAllMetadata("MidwayChapterTime",
+        //     _ => GameInfo.GetChapterTime(level),
+        //     command => Manager.Controller.CurrentCommands.Contains(command));
     }
 
     private static void UpdateChapterTime(Level level) {
@@ -103,41 +105,42 @@ public static class MetadataCommands {
     }
 
     private static void UpdateAllMetadata(string commandName, Func<Command, string> getMetadata, Func<Command, bool> predicate = null) {
-        InputController inputController = Manager.Controller;
-        string tasFilePath = InputController.TasFilePath;
-        IEnumerable<Command> metadataCommands = inputController.Commands.SelectMany(pair => pair.Value)
-            .Where(command => command.Is(commandName) && command.FilePath == InputController.TasFilePath)
-            .Where(predicate ?? (_ => true))
-            .ToList();
-
-        Dictionary<int, string> updateLines = metadataCommands.Where(command => {
-            string metadata = getMetadata(command);
-            if (metadata.IsNullOrEmpty()) {
-                return false;
-            }
-
-            if (command.Args.Length > 0 && command.Args[0] == metadata) {
-                return false;
-            }
-
-            return true;
-        }).ToDictionary(command => command.StudioLineNumber, command => $"{command.Attribute.Name}: {getMetadata(command)}");
-
-        if (updateLines.IsEmpty()) {
-            return;
-        }
-
-        string[] allLines = File.ReadAllLines(tasFilePath);
-        int allLinesLength = allLines.Length;
-        foreach (int lineNumber in updateLines.Keys) {
-            if (lineNumber >= 0 && lineNumber < allLinesLength) {
-                allLines[lineNumber] = updateLines[lineNumber];
-            }
-        }
-
-        bool needsReload = Manager.Controller.NeedsReload;
-        File.WriteAllLines(tasFilePath, allLines);
-        Manager.Controller.NeedsReload = needsReload;
-        CommunicationWrapper.SendUpdateLines(updateLines);
+        // TODO
+        // InputController inputController = Manager.Controller;
+        // string tasFilePath = Manager.Controller.FilePath;
+        // IEnumerable<Command> metadataCommands = inputController.Commands.SelectMany(pair => pair.Value)
+        //     .Where(command => command.Is(commandName) && command.FilePath == Manager.Controller.FilePath)
+        //     .Where(predicate ?? (_ => true))
+        //     .ToList();
+        //
+        // Dictionary<int, string> updateLines = metadataCommands.Where(command => {
+        //     string metadata = getMetadata(command);
+        //     if (metadata.IsNullOrEmpty()) {
+        //         return false;
+        //     }
+        //
+        //     if (command.Args.Length > 0 && command.Args[0] == metadata) {
+        //         return false;
+        //     }
+        //
+        //     return true;
+        // }).ToDictionary(command => command.StudioLineNumber, command => $"{command.Attribute.Name}: {getMetadata(command)}");
+        //
+        // if (updateLines.IsEmpty()) {
+        //     return;
+        // }
+        //
+        // string[] allLines = File.ReadAllLines(tasFilePath);
+        // int allLinesLength = allLines.Length;
+        // foreach (int lineNumber in updateLines.Keys) {
+        //     if (lineNumber >= 0 && lineNumber < allLinesLength) {
+        //         allLines[lineNumber] = updateLines[lineNumber];
+        //     }
+        // }
+        //
+        // bool needsReload = Manager.Controller.NeedsReload;
+        // File.WriteAllLines(tasFilePath, allLines);
+        // Manager.Controller.NeedsReload = needsReload;
+        // CommunicationWrapper.SendUpdateLines(updateLines);
     }
 }

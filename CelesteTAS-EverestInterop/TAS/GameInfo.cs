@@ -151,7 +151,7 @@ public static class GameInfo {
     private static void SceneOnAfterUpdate(On.Monocle.Scene.orig_AfterUpdate orig, Scene self) {
         orig(self);
 
-        if (Manager.UltraFastForwarding) {
+        if (Manager.FastForwarding) {
             return;
         }
 
@@ -220,8 +220,8 @@ public static class GameInfo {
 
                 string analog = string.Empty;
                 string exactAnalog = string.Empty;
-                if (Manager.Running && Manager.Controller.Previous is { } inputFrame && inputFrame.HasActions(Actions.Feather)) {
-                    analog = GetAdjustedAnalog(inputFrame.AngleVector2, out exactAnalog);
+                if (Manager.Running && Manager.Controller.Previous is { } inputFrame && inputFrame.Actions.Has(Actions.Feather)) {
+                    analog = GetAdjustedAnalog(inputFrame.StickPosition, out exactAnalog);
                 }
 
                 string retainedSpeed = GetAdjustedRetainedSpeed(player, out string exactRetainedSpeed);
@@ -339,7 +339,7 @@ public static class GameInfo {
                 stringBuilder.AppendLine($"Rem:   {player.rem.ToSimpleString(TasSettings.PositionDecimals)}");
                 stringBuilder.AppendLine($"Speed: {player.spd.ToSimpleString(TasSettings.SpeedDecimals)}");
             }
-            
+
             stringBuilder.AppendLine($"Seed:  {Pico8Fixer.Seed}");
             if (player?.grace > 1) {
                 stringBuilder.AppendLine($"Coyote({player.grace - 1})");
@@ -597,7 +597,7 @@ public static class GameInfo {
 
 public static class PlayerStates {
     private static readonly Func<StateMachine, string> GetCurrentStateNameFunc = typeof(StateMachine).GetMethod("GetCurrentStateName")?.CreateDelegate<Func<StateMachine, string>>();
-    
+
     private static readonly IDictionary<int, string> States = new Dictionary<int, string> {
         {Player.StNormal, nameof(Player.StNormal)},
         {Player.StClimb, nameof(Player.StClimb)},

@@ -8,7 +8,7 @@ public static class PlayCommand {
     // "Play, StartLine, FramesToWait"
     [TasCommand("Play", ExecuteTiming = ExecuteTiming.Parse)]
     private static void Play(string[] args, int studioLine) {
-        if (!ReadCommand.TryGetLine(args[0], InputController.TasFilePath, out int startLine)) {
+        if (!ReadCommand.TryGetLine(args[0], Manager.Controller.FilePath, out int startLine)) {
             AbortTas($"\"Play, {string.Join(", ", args)}\" failed\n{args[0]} is invalid", true);
             return;
         }
@@ -22,6 +22,6 @@ public static class PlayCommand {
             return;
         }
 
-        Manager.Controller.ReadFile(InputController.TasFilePath, startLine, int.MaxValue, startLine - 1);
+        Manager.Controller.ReadFile(Manager.Controller.FilePath, startLine, int.MaxValue, startLine - 1);
     }
 }

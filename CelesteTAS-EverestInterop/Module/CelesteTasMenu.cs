@@ -181,7 +181,7 @@ internal static class CelesteTasMenu {
             foreach (TextMenuExt.EaseInSubHeaderExt easeInSubHeader in enabledDescriptions) {
                 easeInSubHeader.FadeVisible = value;
             }
-            
+
             CommunicationWrapper.ChangeStatus();
         });
         menu.Add(enabledItem);
@@ -190,7 +190,7 @@ internal static class CelesteTasMenu {
             menu.Add(easeInSubMenu);
         }
 
-        foreach (string text in Split(InputController.TasFilePath, 60).Reverse()) {
+        foreach (string text in Split(Manager.Controller.FilePath, 60).Reverse()) {
             enabledDescriptions.Add(AddEnabledDescription(enabledItem, menu, text));
         }
 

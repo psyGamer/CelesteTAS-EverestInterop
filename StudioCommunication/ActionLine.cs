@@ -4,9 +4,8 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using StudioCommunication;
 
-namespace CelesteStudio.Util;
+namespace StudioCommunication;
 
 public struct ActionLine() {
     public const char Delimiter = ',';
@@ -20,10 +19,10 @@ public struct ActionLine() {
     public string? FeatherMagnitude;
 
     public HashSet<char> CustomBindings = [];
-    
+
     public static ActionLine? Parse(string line, bool ignoreInvalidFloats = true) => TryParseStrict(line, out var actionLine, ignoreInvalidFloats) ? actionLine : null;
     public static bool TryParse(string line, out ActionLine value, bool ignoreInvalidFloats = true) => TryParseStrict(line, out value, ignoreInvalidFloats) || TryParseLoose(line, out value, ignoreInvalidFloats);
-    
+
     /// Parses action-lines, which mostly follow the correct formatting (for example: "  15,R,Z")
     public static bool TryParseStrict(string line, out ActionLine actionLine, bool ignoreInvalidFloats = true) {
         actionLine = default;
@@ -104,28 +103,28 @@ public struct ActionLine() {
 
         return true;
     }
-    
+
     /// Parses action-lines, which mostly are correct (for example: "1gd")
     private enum ParseState { Frame, Action, DashOnly, MoveOnly, PressedKey, FeatherAngle, FeatherMagnitude }
     public static bool TryParseLoose(string line, out ActionLine actionLine, bool ignoreInvalidFloats = true) {
         actionLine = default;
         actionLine.CustomBindings = new HashSet<char>();
-        
+
         ParseState state = ParseState.Frame;
         string currValue = "";
-        
+
         foreach (char c in line) {
             if (char.IsWhiteSpace(c)) {
                 continue;
             }
-            
+
             switch (state) {
                 case ParseState.Frame:
                 {
                     if (c == Delimiter) {
                         continue;
                     }
-                    
+
                     if (char.IsDigit(c)) {
                         currValue += c;
                     } else {
@@ -138,13 +137,13 @@ public struct ActionLine() {
                     }
                     break;
                 }
-                
+
                 case ParseState.Action:
                 {
                     if (c == Delimiter) {
                         continue;
                     }
-                    
+
                     var action = c.ActionForChar();
                     actionLine.Actions |= action;
                     state = action switch {
@@ -156,14 +155,14 @@ public struct ActionLine() {
                     };
                     break;
                 }
-                
+
                 case ParseState.DashOnly:
                 {
                     if (c == Delimiter) {
                         state = ParseState.Action;
                         continue;
                     }
-                    
+
                     var action = c.ActionForChar();
                     if (action is not (Actions.Left or Actions.Right or Actions.Up or Actions.Down)) {
                         goto case ParseState.Action;
@@ -171,14 +170,14 @@ public struct ActionLine() {
                     actionLine.Actions |= action.ToDashOnlyActions();
                     break;
                 }
-                
+
                 case ParseState.MoveOnly:
                 {
                     if (c == Delimiter) {
                         state = ParseState.Action;
                         continue;
                     }
-                    
+
                     var action = c.ActionForChar();
                     if (action is not (Actions.Left or Actions.Right or Actions.Up or Actions.Down)) {
                         goto case ParseState.Action;
@@ -186,25 +185,25 @@ public struct ActionLine() {
                     actionLine.Actions |= action.ToMoveOnlyActions();
                     break;
                 }
-                
+
                 case ParseState.PressedKey:
                 {
                     if (c == Delimiter) {
                         state = ParseState.Action;
                         continue;
                     }
-                    
+
                     actionLine.CustomBindings.Add(char.ToUpper(c));
                     break;
                 }
-                
+
                 case ParseState.FeatherAngle:
                 {
                     if (c == Delimiter) {
                         state = ParseState.FeatherMagnitude;
                         continue;
                     }
-                    
+
                     if (char.IsDigit(c) || c == '.') {
                         actionLine.FeatherAngle ??= string.Empty;
                         actionLine.FeatherAngle += c;
@@ -213,14 +212,14 @@ public struct ActionLine() {
                     }
                     break;
                 }
-                
+
                 case ParseState.FeatherMagnitude:
                 {
                     if (c == Delimiter) {
                         state = ParseState.Action;
                         continue;
                     }
-                    
+
                     if (char.IsDigit(c) || c == '.') {
                         actionLine.FeatherMagnitude ??= string.Empty;
                         actionLine.FeatherMagnitude += c;
@@ -231,7 +230,7 @@ public struct ActionLine() {
                 }
             }
         }
-        
+
         // Clamp angle / magnitude
         if (actionLine.FeatherAngle is { } angleString) {
             if (float.TryParse(angleString, CultureInfo.InvariantCulture, out float angle)) {
@@ -247,7 +246,7 @@ public struct ActionLine() {
                 return false;
             }
         }
-        
+
         return state != ParseState.Frame;
     }
 

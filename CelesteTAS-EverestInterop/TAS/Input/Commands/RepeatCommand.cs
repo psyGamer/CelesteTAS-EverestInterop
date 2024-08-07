@@ -56,12 +56,10 @@ public static class RepeatCommand {
     [TasCommand("EndRepeat", ExecuteTiming = ExecuteTiming.Parse)]
     private static void EndRepeat(string[] _, int studioLine, string filePath, int fileLine) {
         string errorText = $"{Path.GetFileName(filePath)} line {fileLine}\n";
-        if (!RepeatArgs.TryGetValue(filePath, out var arguments)) {
+        if (!RepeatArgs.Remove(filePath, out var arguments)) {
             AbortTas($"{errorText}EndRepeat command does not have a paired Repeat command");
             return;
         }
-
-        RepeatArgs.Remove(filePath);
 
         int endLine = fileLine - 1;
         int startLine = arguments.StartLine;
@@ -73,7 +71,7 @@ public static class RepeatCommand {
         }
 
         InputController inputController = Manager.Controller;
-        bool mainFile = filePath == InputController.TasFilePath;
+        bool mainFile = filePath == inputController.FilePath;
 
         // first loop needs to set repeat index and repeat count
         if (mainFile) {
