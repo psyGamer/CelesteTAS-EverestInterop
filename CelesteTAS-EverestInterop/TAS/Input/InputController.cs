@@ -118,6 +118,8 @@ public class InputController {
             return; // Already up-to-date
         }
 
+        "Refreshing inputs...".Log(LogLevel.Debug);
+
         int lastChecksum = Checksum;
         bool firstRun = usedFiles.IsEmpty();
 
@@ -273,13 +275,14 @@ public class InputController {
             NextLabelFastForward = next;
         }
 
-        Manager.NextState = Manager.State.FastForward;
+        Manager.NextState = Manager.State.Running;
     }
 
     /// Stops execution of the current TAS
     public void Stop() {
         CurrentFrameInTAS = 0;
         CurrentFrameInInput = 0;
+        NextLabelFastForward = null;
     }
 
     /// Clears all parsed data for the current TAS
