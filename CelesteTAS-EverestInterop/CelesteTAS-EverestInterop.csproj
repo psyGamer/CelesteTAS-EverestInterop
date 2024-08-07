@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <AssemblyName>CelesteTAS-EverestInterop</AssemblyName>
@@ -16,14 +16,15 @@
         <NoWarn>$(NoWarn);CS0436</NoWarn>
 
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-        <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
     </PropertyGroup>
 
     <PropertyGroup>
         <PathMap>$(MSBuildProjectDirectory)=CelesteTAS/</PathMap>
     </PropertyGroup>
 
-    <Import Project="..\StudioCommunication\StudioCommunication.targets" />
+    <ItemGroup>
+        <ProjectReference Include="..\StudioCommunication\StudioCommunication.csproj" />
+    </ItemGroup>
     
     <ItemGroup>
         <Reference Include="$(CelestePrefix)\Celeste.dll" Publicize="true" />
@@ -49,6 +50,8 @@
     <Target Name="CopyFiles" AfterTargets="Build">
         <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="..\bin" />
         <Copy SourceFiles="$(OutputPath)$(AssemblyName).pdb" DestinationFolder="..\bin" />
+        <Copy SourceFiles="$(OutputPath)StudioCommunication.dll" DestinationFolder="..\bin" />
+        <Copy SourceFiles="$(OutputPath)StudioCommunication.pdb" DestinationFolder="..\bin" />
         
         <Copy SourceFiles="EverestInterop\Lua\env.lua" DestinationFiles="..\bin\env.lua" />
 

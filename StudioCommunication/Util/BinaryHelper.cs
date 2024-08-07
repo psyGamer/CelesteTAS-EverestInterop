@@ -89,7 +89,7 @@ public static class BinaryHelper {
     }
 
     public static T ReadObject<T>(this BinaryReader reader) => (T)reader.ReadObject(typeof(T));
-    public static object ReadObject(this BinaryReader reader, Type type) {
+    public static object? ReadObject(this BinaryReader reader, Type type) {
         // Primitives
         if (type == typeof(bool))
             return reader.ReadBoolean();
@@ -133,7 +133,7 @@ public static class BinaryHelper {
         }
         if (type.IsAssignableTo(typeof(IList)) && type.IsGenericType) {
             int count = reader.Read7BitEncodedInt();
-            var elemType = type.GetElementType()!;
+            var elemType = type.GetElementType() ?? type.GenericTypeArguments[0];
             
             var list = (IList)Activator.CreateInstance(type)!;
             for (int i = 0; i < count; i++) {
@@ -145,7 +145,7 @@ public static class BinaryHelper {
         if (type.IsAssignableTo(typeof(ITuple)) && type.IsGenericType) {
             int count = reader.Read7BitEncodedInt();
 
-            var values = new object[count];
+            var values = new object?[count];
             for (int i = 0; i < count; i++) {
                 values[i] = reader.ReadObject(type.GenericTypeArguments[i]);
             }
@@ -153,7 +153,17 @@ public static class BinaryHelper {
             return Activator.CreateInstance(type, values)!;
         }
         
+        bool nullable = !type.IsValueType;
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)) {
+            nullable = true;
+            type = Nullable.GetUnderlyingType(type)!;
+        }
+        
         int length = reader.Read7BitEncodedInt();
+        if (nullable && length == 0) {
+            return null;
+        }
+        
         var buffer = reader.ReadBytes(length);
         return MemoryPackSerializer.Deserialize(type, buffer)!;
     }

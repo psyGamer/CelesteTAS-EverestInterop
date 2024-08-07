@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using CelesteStudio.Util;
 using Eto.Forms;
@@ -51,7 +52,7 @@ public static class CommunicationWrapper {
     private static void OnBindingsChanged(Dictionary<HotkeyID, List<WinFormsKeys>> newBindings) {
         bindings = newBindings;
         foreach (var pair in bindings) {
-            Console.WriteLine(pair.ToString());
+            Console.WriteLine($"{pair.Key}: {string.Join(" + ", pair.Value.Select(key => key.ToString()))}");
         }
     }
     
@@ -63,6 +64,13 @@ public static class CommunicationWrapper {
             comm!.SendPath(path);
         }
     }
+
+    public static void SendHotkey(HotkeyID hotkey) {
+        if (Connected) {
+            comm!.SendHotkey(hotkey, false);
+        }
+    }
+
     public static bool SendKeyEvent(Keys key, Keys modifiers, bool released) {
         var winFormsKey = key.ToWinForms();
         
@@ -125,7 +133,7 @@ public static class CommunicationWrapper {
     public static string GameInfo => Connected ? state.GameInfo : string.Empty;
     public static string LevelName => Connected ? state.LevelName : string.Empty;
     public static string ChapterTime => Connected ? state.ChapterTime : string.Empty;
-    public static bool ShowSubpixelIndicator => Connected ? state.ShowSubpixelIndicator : false;
+    public static bool ShowSubpixelIndicator => Connected && state.ShowSubpixelIndicator;
     public static (float X, float Y) SubpixelRemainder => Connected ? state.SubpixelRemainder : (0.0f, 0.0f);
     
     public static string GetConsoleCommand(bool simple) {
@@ -133,30 +141,30 @@ public static class CommunicationWrapper {
             return string.Empty;
         }
         
-        return (string)(comm!.RequestGameData(GameDataType.ConsoleCommand, simple).Result ?? string.Empty);
+        return (string?)comm!.RequestGameData(GameDataType.ConsoleCommand, simple).Result ?? string.Empty;
     }
     public static string GetModURL() {
         if (!Connected) {
             return string.Empty;
         }
         
-        return (string)(comm!.RequestGameData(GameDataType.ModUrl).Result ?? string.Empty);
+        return (string?)comm!.RequestGameData(GameDataType.ModUrl).Result ?? string.Empty;
     }
     public static string GetModInfo() {
         if (!Connected) {
             return string.Empty;
         }
         
-        return (string)(comm!.RequestGameData(GameDataType.ModInfo).Result ?? string.Empty);
+        return (string?)comm!.RequestGameData(GameDataType.ModInfo).Result ?? string.Empty;
     }
     public static string GetExactGameInfo() {
         if (!Connected) {
             return string.Empty;
         }
         
-        return (string)(comm!.RequestGameData(GameDataType.ExactGameInfo).Result ?? string.Empty);
+        return (string?)comm!.RequestGameData(GameDataType.ExactGameInfo).Result ?? string.Empty;
     }
-    
+
     private static async Task<CommandAutoCompleteEntry[]> RequestAutoCompleteEntries(GameDataType gameDataType, string argsText, int index) {
         if (!Connected) {
             return [];
@@ -168,10 +176,26 @@ public static class CommunicationWrapper {
     public static Task<CommandAutoCompleteEntry[]> RequestSetCommandAutoCompleteEntries(string argsText, int index) => RequestAutoCompleteEntries(GameDataType.SetCommandAutoCompleteEntries, argsText, index);
     public static Task<CommandAutoCompleteEntry[]> RequestInvokeCommandAutoCompleteEntries(string argsText, int index) => RequestAutoCompleteEntries(GameDataType.InvokeCommandAutoCompleteEntries, argsText, index);
     
+    public static T? GetRawData<T>(string template, bool alwaysList = false) {
+        if (!Connected) {
+            return default;
+        }
+        
+        return (T?)comm!.RequestGameData(GameDataType.RawInfo, (template, alwaysList), TimeSpan.FromSeconds(15), typeof(T)).Result ?? default;
+    }
+    
+    public static async Task<GameState?> GetGameState() {
+        if (!Connected) {
+            return null;
+        }
+        
+        return (GameState?)await comm!.RequestGameData(GameDataType.GameState).ConfigureAwait(false);
+    }
+    
     #endregion
     
     #region Actions
-    
+
     public static string GetCustomInfoTemplate() {
         if (!Connected) {
             return string.Empty;

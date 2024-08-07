@@ -95,12 +95,14 @@ public sealed class Settings {
     public bool AutoSave { get; set; } = true;
     public bool AutoRemoveMutuallyExclusiveActions { get; set; } = true;
     
+    public float ScrollSpeed { get; set; } = 0.0f; // A value <= 0.0f means to use the native scrollable
     public int MaxUnfoldedLines { get; set; } = 30;
     
     public InsertDirection InsertDirection { get; set; } = InsertDirection.Above;
     public CaretInsertPosition CaretInsertPosition { get; set; } = CaretInsertPosition.PreviousPosition;
     public CommandSeparator CommandSeparator { get; set; } = CommandSeparator.CommaSpace;
     public LineNumberAlignment LineNumberAlignment { get; set; } = LineNumberAlignment.Left;
+    public bool AutoIndexRoomLabels { get; set; } = true;
     
     public bool CompactMenuBar { get; set; } = false;
     
@@ -283,8 +285,6 @@ public sealed class FeatherlineSettings {
     public int GenerationSurvivors { get; set; } = 20;
     public float MutationMagnitude { get; set; } = 8f;
     public int MaxMutations { get; set; } = 5;
-    public bool DontHazard { get; set; } = false;
-    public bool DontSolid { get; set; } = false;
     public bool FrameOnly { get; set; } = false;
     public bool DisallowWall { get; set; } = false;
     public int SimulationThreads { get; set; } = 8;

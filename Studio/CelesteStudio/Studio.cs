@@ -14,6 +14,7 @@ using Eto.Forms;
 using Eto.Drawing;
 using FontDialog = CelesteStudio.Dialog.FontDialog;
 using Eto.Forms.ThemedControls;
+using StudioCommunication;
 
 namespace CelesteStudio;
 
@@ -21,8 +22,11 @@ public sealed class Studio : Form {
     public static Studio Instance = null!;
     public static Version Version { get; private set; } = null!;
     
-    // Platform-specific callback to handle new windows
+    /// Platform-specific callback to handle new windows
     public readonly Action<Window> WindowCreationCallback;
+    
+    /// Actions which aren't associated with any menu and only invokable by hotkey 
+    public MenuItem[] GlobalHotkeys { get; private set; } = [];
 
     public readonly Editor Editor;
     public readonly GameInfoPanel GameInfoPanel;
@@ -70,9 +74,14 @@ public sealed class Studio : Form {
             Location = lastLocation;
         }
         
+        GlobalHotkeys = CreateGlobalHotkeys();
+        
         // Needs to be registered before the editor is created 
         Settings.Changed += ApplySettings;
-        Settings.KeyBindingsChanged += () => Menu = CreateMenu();
+        Settings.KeyBindingsChanged += () => {
+            Menu = CreateMenu();
+            GlobalHotkeys = CreateGlobalHotkeys();
+        };
         
         // Setup editor
         {
@@ -134,6 +143,15 @@ public sealed class Studio : Form {
         }
 
         about.ShowDialog(parent);
+    }
+    
+    private MenuItem[] CreateGlobalHotkeys() {
+        return [
+            MenuEntry.Game_Start.ToAction(() => CommunicationWrapper.SendHotkey(HotkeyID.Start)),
+            MenuEntry.Game_Pause.ToAction(() => CommunicationWrapper.SendHotkey(HotkeyID.Pause)),
+            MenuEntry.Game_Restart.ToAction(() => CommunicationWrapper.SendHotkey(HotkeyID.Restart)),
+            MenuEntry.Game_FrameAdvance.ToAction(() => CommunicationWrapper.SendHotkey(HotkeyID.FrameAdvance)),
+        ];
     }
 
     public void RecalculateLayout() {
@@ -231,10 +249,6 @@ public sealed class Studio : Form {
     }
     
     public void OpenFile(string filePath) {
-        if (filePath == Editor.Document.FilePath && filePath != Document.ScratchFile) {
-            return;
-        }
-        
         if (!string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
             Settings.Instance.AddRecentFile(filePath);
         
@@ -405,6 +419,8 @@ public sealed class Studio : Form {
             new SubMenuItem { Text = "&Preferences", Items = {
                 MenuUtils.CreateSettingToggle("&Auto Save File", nameof(Settings.AutoSave)),
                 MenuUtils.CreateSettingToggle("Auto Remove Mutually Exclusive Actions", nameof(Settings.AutoRemoveMutuallyExclusiveActions)),
+                MenuUtils.CreateSettingToggle("Auto-Index Room Labels", nameof(Settings.AutoIndexRoomLabels)),
+                MenuUtils.CreateSettingNumberInput("Scroll Speed", nameof(Settings.ScrollSpeed), 0.0f, 30.0f, 1),
                 MenuUtils.CreateSettingNumberInput("Max Unfolded Lines", nameof(Settings.MaxUnfoldedLines), 0, int.MaxValue, 1),
                 MenuUtils.CreateSettingEnum<InsertDirection>("Insert Direction", nameof(Settings.InsertDirection), ["Above Current Line", "Below Current Line"]),
                 MenuUtils.CreateSettingEnum<CaretInsertPosition>("Caret Insert Position", nameof(Settings.CaretInsertPosition), ["After Inserted Text", "Keep at Previous Position"]),
@@ -412,12 +428,12 @@ public sealed class Studio : Form {
             }},
             new SubMenuItem { Text = "&View", Items = {
                 MenuEntry.View_ShowGameInfo.ToSettingToggle(nameof(Settings.ShowGameInfo)),
-                MenuEntry.View_ShowSubpixelIndicator.ToSettingToggle(nameof(Settings.ShowGameInfo)),
+                MenuEntry.View_ShowSubpixelIndicator.ToSettingToggle(nameof(Settings.ShowSubpixelIndicator)),
                 MenuUtils.CreateSettingNumberInput("Subpixel Indicator Scale", nameof(Settings.SubpixelIndicatorScale), 0.1f, 10.0f, 0.25f),
                 new SeparatorMenuItem(),
-                MenuEntry.View_AlwaysOnTop.ToSettingToggle(nameof(Settings.ShowGameInfo)),
-                MenuEntry.View_WrapComments.ToSettingToggle(nameof(Settings.ShowGameInfo)),
-                MenuEntry.View_ShowFoldingIndicator.ToSettingToggle(nameof(Settings.ShowGameInfo)),
+                MenuEntry.View_AlwaysOnTop.ToSettingToggle(nameof(Settings.AlwaysOnTop)),
+                MenuEntry.View_WrapComments.ToSettingToggle(nameof(Settings.WordWrapComments)),
+                MenuEntry.View_ShowFoldingIndicator.ToSettingToggle(nameof(Settings.ShowFoldIndicators)),
                 MenuUtils.CreateSettingEnum<LineNumberAlignment>("Line Number Alignment", nameof(Settings.LineNumberAlignment), ["Left", "Right"]),
                 MenuUtils.CreateSettingToggle("Compact Menu Bar", nameof(Settings.CompactMenuBar)),
             }},

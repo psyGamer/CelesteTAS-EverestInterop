@@ -117,6 +117,7 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
                     GameDataType.SettingValue => reader.ReadString(),
                     GameDataType.SetCommandAutoCompleteEntries or
                     GameDataType.InvokeCommandAutoCompleteEntries => reader.ReadObject<(string, int)>(),
+                    GameDataType.RawInfo => reader.ReadObject<(string, bool)>(),
                     _ => null,
                 };
                 LogVerbose($"Received message RequestGameData: '{gameDataType}' ('{arg ?? "<null>"}')");
@@ -134,32 +135,40 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
                             GameDataType.CustomInfoTemplate => !string.IsNullOrWhiteSpace(TasSettings.InfoCustomTemplate) ? TasSettings.InfoCustomTemplate : string.Empty,
                             GameDataType.SetCommandAutoCompleteEntries => GameData.GetSetCommandAutoCompleteEntries((((string, int))arg!).Item1, (((string, int))arg!).Item2).ToArray(),
                             GameDataType.InvokeCommandAutoCompleteEntries => GameData.GetInvokeCommandAutoCompleteEntries((((string, int))arg!).Item1, (((string, int))arg!).Item2).ToArray(),
+                            GameDataType.RawInfo => InfoCustom.GetRawInfo(((string, bool))arg!),
+                            GameDataType.GameState => GameData.GetGameState(),
                             _ => null,
                         };
 
-                        if (gameData != null) {
-                            QueueMessage(MessageID.GameDataResponse, writer => {
-                                writer.Write((byte)gameDataType);
+                        QueueMessage(MessageID.GameDataResponse, writer => {
+                            writer.Write((byte)gameDataType);
+                            
+                            switch (gameDataType) {
+                                case GameDataType.ConsoleCommand: 
+                                case GameDataType.ModInfo: 
+                                case GameDataType.ExactGameInfo:
+                                case GameDataType.SettingValue: 
+                                case GameDataType.CompleteInfoCommand: 
+                                case GameDataType.ModUrl:
+                                case GameDataType.CustomInfoTemplate:
+                                    writer.Write((string?)gameData ?? string.Empty);
+                                    break;
                                 
-                                switch (gameDataType) {
-                                    case GameDataType.ConsoleCommand: 
-                                    case GameDataType.ModInfo: 
-                                    case GameDataType.ExactGameInfo:
-                                    case GameDataType.SettingValue: 
-                                    case GameDataType.CompleteInfoCommand: 
-                                    case GameDataType.ModUrl:
-                                    case GameDataType.CustomInfoTemplate:
-                                        writer.Write((string)gameData);
-                                        break;
-                                    
-                                    case GameDataType.SetCommandAutoCompleteEntries:
-                                    case GameDataType.InvokeCommandAutoCompleteEntries:
-                                        writer.WriteObject((CommandAutoCompleteEntry[])gameData);
-                                        break;
-                                }
-                                LogVerbose($"Sent message GameDataResponse: {gameDataType} = '{gameData}'");    
-                            });
-                        }
+                                case GameDataType.SetCommandAutoCompleteEntries:
+                                case GameDataType.InvokeCommandAutoCompleteEntries:
+                                    writer.WriteObject((CommandAutoCompleteEntry[]?)gameData ?? []);
+                                    break;
+                                
+                                case GameDataType.RawInfo:
+                                    writer.WriteObject(gameData);
+                                    break;
+                                
+                                case GameDataType.GameState:
+                                    writer.WriteObject((GameState?)gameData);
+                                    break;
+                            }
+                            LogVerbose($"Sent message GameDataResponse: {gameDataType} = '{gameData}'");    
+                        });
                     } catch (Exception ex) {
                         Console.WriteLine(ex);
                     }

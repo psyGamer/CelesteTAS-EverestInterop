@@ -1,4 +1,4 @@
-﻿namespace StudioCommunication;
+namespace StudioCommunication;
 
 /// Identifiers for messages sent between Celeste and Studio.
 /// See the send / receive implementations for the attached data.
@@ -70,6 +70,8 @@ public enum GameDataType : byte {
     CustomInfoTemplate,
     SetCommandAutoCompleteEntries,
     InvokeCommandAutoCompleteEntries,
+    RawInfo,
+    GameState,
 }
 
 public enum RecordingFailedReason : byte {

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using CelesteStudio.Util;
 using Eto.Forms;
 
@@ -20,15 +19,17 @@ public enum MenuEntry {
     Editor_DeleteSelectedLines,
     Editor_InsertRemoveBreakpoint, Editor_InsertRemoveSavestateBreakpoint, Editor_RemoveAllUncommentedBreakpoints, Editor_RemoveAllBreakpoints, Editor_CommentUncommentAllBreakpoints, Editor_CommentUncommentInputs, Editor_CommentUncommentText,
     Editor_InsertRoomName, Editor_InsertCurrentTime, Editor_RemoveAllTimestamps, Editor_InsertModInfo, Editor_InsertConsoleLoadCommand, Editor_InsertSimpleConsoleLoadCommand,
-    Editor_SwapSelectedLR, Editor_SwapSelectedJK, Editor_SwapSelectedXC, Editor_CombineConsecutiveSameInputs, Editor_ForceCombineInputFrames,
+    Editor_SwapSelectedLR, Editor_SwapSelectedJK, Editor_SwapSelectedXC, Editor_CombineConsecutiveSameInputs, Editor_ForceCombineInputFrames, Editor_SplitFrames,
     Editor_OpenReadFileGoToPlayLine,
     
     Status_CopyGameInfoToClipboard, Status_ReconenctStudioCeleste,
     Status_EditCustomInfoTemplate, Status_ClearWatchEntityInfo,
     
     StatusPopout_AlwaysOnTop,
+    
+    Game_Start, Game_Restart, Game_FrameAdvance, Game_Pause,
 }
-public enum MenuEntryCategory { File, Settings, View, Editor, Status, StatusPopout }
+public enum MenuEntryCategory { File, Settings, View, Editor, Status, StatusPopout, GameHotkeys }
 
 public static class MenuEntryExtensions {
     private static readonly Dictionary<MenuEntry, Keys> DefaultKeyBindings = new() {
@@ -77,6 +78,7 @@ public static class MenuEntryExtensions {
         { MenuEntry.Editor_SwapSelectedXC, Keys.None },
         { MenuEntry.Editor_CombineConsecutiveSameInputs, Application.Instance.CommonModifier | Keys.L },
         { MenuEntry.Editor_ForceCombineInputFrames, Application.Instance.CommonModifier | Keys.Shift | Keys.L },
+        { MenuEntry.Editor_SplitFrames, Keys.None },
         { MenuEntry.Editor_OpenReadFileGoToPlayLine, Keys.None },
         
         { MenuEntry.Status_CopyGameInfoToClipboard, Application.Instance.CommonModifier | Keys.Shift | Keys.C },
@@ -85,6 +87,11 @@ public static class MenuEntryExtensions {
         { MenuEntry.Status_ClearWatchEntityInfo, Keys.None },
         
         { MenuEntry.StatusPopout_AlwaysOnTop, Keys.None },
+        
+        { MenuEntry.Game_Start, Keys.None },
+        { MenuEntry.Game_Pause, Keys.None },
+        { MenuEntry.Game_Restart, Keys.None },
+        { MenuEntry.Game_FrameAdvance, Keys.None },
     };
     private static readonly Dictionary<MenuEntry, string> EntryNames = new() {
         { MenuEntry.File_New, "&New File" },
@@ -132,6 +139,7 @@ public static class MenuEntryExtensions {
         { MenuEntry.Editor_SwapSelectedXC, "Swap Selected X and C" },
         { MenuEntry.Editor_CombineConsecutiveSameInputs, "Combine Consecutive Same Inputs" },
         { MenuEntry.Editor_ForceCombineInputFrames, "Force Combine Input Frames" },
+        { MenuEntry.Editor_SplitFrames, "Split Input Frames" },
         { MenuEntry.Editor_OpenReadFileGoToPlayLine, "Open Read File / Go To Play Line" },
         
         { MenuEntry.Status_CopyGameInfoToClipboard, "&Copy Game Info to Clipboard" },
@@ -140,6 +148,11 @@ public static class MenuEntryExtensions {
         { MenuEntry.Status_ClearWatchEntityInfo, "Clear Watch Entity Info" },
         
         { MenuEntry.StatusPopout_AlwaysOnTop, "Always on Top" },
+        
+        { MenuEntry.Game_Start, "Start" },
+        { MenuEntry.Game_Pause, "Pause" },
+        { MenuEntry.Game_Restart, "Restart" },
+        { MenuEntry.Game_FrameAdvance, "Advance Frame" },
     };
     private static readonly Dictionary<MenuEntryCategory, MenuEntry[]> Categories = new() {
         { MenuEntryCategory.File, [
@@ -159,7 +172,7 @@ public static class MenuEntryExtensions {
             MenuEntry.Editor_DeleteSelectedLines,
             MenuEntry.Editor_InsertRemoveBreakpoint, MenuEntry.Editor_InsertRemoveSavestateBreakpoint, MenuEntry.Editor_RemoveAllUncommentedBreakpoints, MenuEntry.Editor_RemoveAllBreakpoints, MenuEntry.Editor_CommentUncommentAllBreakpoints, MenuEntry.Editor_CommentUncommentInputs, MenuEntry.Editor_CommentUncommentText,
             MenuEntry.Editor_InsertRoomName, MenuEntry.Editor_InsertCurrentTime, MenuEntry.Editor_RemoveAllTimestamps, MenuEntry.Editor_InsertModInfo, MenuEntry.Editor_InsertConsoleLoadCommand, MenuEntry.Editor_InsertSimpleConsoleLoadCommand,
-            MenuEntry.Editor_SwapSelectedLR, MenuEntry.Editor_SwapSelectedJK, MenuEntry.Editor_SwapSelectedXC, MenuEntry.Editor_CombineConsecutiveSameInputs, MenuEntry.Editor_ForceCombineInputFrames,
+            MenuEntry.Editor_SwapSelectedLR, MenuEntry.Editor_SwapSelectedJK, MenuEntry.Editor_SwapSelectedXC, MenuEntry.Editor_CombineConsecutiveSameInputs, MenuEntry.Editor_ForceCombineInputFrames, MenuEntry.Editor_SplitFrames,
             MenuEntry.Editor_OpenReadFileGoToPlayLine] },
 
         { MenuEntryCategory.Status, [
@@ -167,6 +180,8 @@ public static class MenuEntryExtensions {
             MenuEntry.Status_EditCustomInfoTemplate, MenuEntry.Status_ClearWatchEntityInfo] },
 
         { MenuEntryCategory.StatusPopout, [MenuEntry.StatusPopout_AlwaysOnTop] },
+        
+        { MenuEntryCategory.GameHotkeys, [MenuEntry.Game_Start, MenuEntry.Game_Pause, MenuEntry.Game_Restart, MenuEntry.Game_FrameAdvance] },
     };
     
 #if DEBUG
@@ -202,6 +217,7 @@ public static class MenuEntryExtensions {
         MenuEntryCategory.Editor => "Editor - Context Menu",
         MenuEntryCategory.Status => "Status - Context Menu",
         MenuEntryCategory.StatusPopout => "Status Popout - Context Menu",
+        MenuEntryCategory.GameHotkeys => "Game Hotkeys",
         _ => throw new UnreachableException(),
     };
     

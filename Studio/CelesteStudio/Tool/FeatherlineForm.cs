@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -8,6 +9,7 @@ using CelesteStudio.Communication;
 using CelesteStudio.Util;
 using Eto.Drawing;
 using Eto.Forms;
+using Featherline;
 using StudioCommunication;
 
 namespace CelesteStudio.Tool;
@@ -28,8 +30,9 @@ public sealed class FeatherlineForm : Form {
     private readonly Button run;
     private readonly Button copyOutput;
     private FeatherlineHelpForm? helpForm;
+    private FeatherlineProgressDialog? progressDialog;
 
-    private string gameInfo;
+    private bool running = false;
 
     public FeatherlineForm() {
         Title = $"Featherline - v{Version}";
@@ -87,8 +90,8 @@ public sealed class FeatherlineForm : Form {
                     Spacing = 10,
                     Orientation = Orientation.Horizontal,
                     Items = {
-                        (getInfo = new Button((_, _) => GetInfo()) { Text = "Get Game Info", Width = 150}),
-                        (run = new Button((_, _) => Run()) { Text = "Run", Width = 150, Enabled = false }),
+                        (getInfo = new Button((_, _) => GetInfo()) { Text = "Get Game Info", Width = 150 }),
+                        (run = new Button((_, _) => Toggle()) { Text = "Run", Width = 150, Enabled = false }),
                         (copyOutput = new Button((_, _) => CopyOutput()) { Text = "Copy Output", Width = 150, Enabled = false }),
                     }
                 }
@@ -96,9 +99,15 @@ public sealed class FeatherlineForm : Form {
         };
         Resizable = false;  
         Load += (_, _) => Studio.Instance.WindowCreationCallback(this);
-        gameInfo = "";
     }
-
+    
+    protected override void OnClosing(CancelEventArgs e) {
+        GAManager.abortAlgorithm = true;
+        progressDialog?.Close();
+        
+        base.OnClosing(e);
+    }
+    
     private void CreateMenu() {
         Menu = new MenuBar { // TODO: add help window
             AboutItem = MenuUtils.CreateAction("About...", Keys.None, () => {
@@ -119,10 +128,6 @@ public sealed class FeatherlineForm : Form {
                         MenuUtils.CreateFeatherlineSettingNumberInput("Mutation Magnitude", "MutationMagnitude", 0f, 180f, 0.1f),
                         MenuUtils.CreateFeatherlineSettingNumberInput("Max Mutation Count", "MaxMutations", 1, 999999, 1),
                     }},
-                    new SubMenuItem { Text = "Computation", Items = {
-                        MenuUtils.CreateFeatherlineSettingToggle("Don't Compute Hazards", "DontHazard"),
-                        MenuUtils.CreateFeatherlineSettingToggle("Don't Compute Walls or Colliders", "DontSolid"),
-                    }},
                     new SubMenuItem { Text = "Algorithm Mode", Items = {
                         MenuUtils.CreateFeatherlineSettingToggle("Frame Genes Only", "FrameOnly"),
                         MenuUtils.CreateFeatherlineSettingToggle("Disallow Wall Collision", "DisallowWall"),
@@ -139,8 +144,15 @@ public sealed class FeatherlineForm : Form {
     }
 
     private void GetInfo() {
-        // TODO: get game info from studio and copy into gameInfo
-        run.Enabled = true;
+        run.Enabled = false;
+        var info = CommunicationWrapper.GetGameState().Result;
+        if (info == null) {
+            Console.Error.WriteLine("Failed to get game state");
+            MessageBox.Show("Failed to get game state, please try again.", MessageBoxType.Error);
+        } else {
+            Featherline.Settings.Info = info.Value;
+            run.Enabled = true;
+        }
     }
 
     private void CopyOutput() {
@@ -148,9 +160,83 @@ public sealed class FeatherlineForm : Form {
         Clipboard.Instance.Text = output.Text;
     }
 
-    private void Run() {
-        // TODO: do stuff
-        copyOutput.Enabled = true;
+    private void Toggle() {
+        if (!running) { // todo: get rid of this running var
+            running = true;
+
+            progressDialog ??= new();
+            progressDialog.ShowModalAsync();
+            progressDialog.Closed += (_, _) => {
+                progressDialog = null;
+                run.Enabled = true;
+                getInfo.Enabled = true;
+                GAManager.abortAlgorithm = true;
+            };
+            
+            run.Enabled = false;
+            getInfo.Enabled = false;
+            
+            Featherline.Settings.TextReporter = progressDialog.textReporter;
+            Featherline.Settings.ProgressReporter = progressDialog.progressReporter;
+
+            Featherline.Settings.Generations = (int) generations.Value;
+            Featherline.Settings.Framecount = (int) maxFrames.Value;
+            Featherline.Settings.GensPerTiming = (int) gensPerTiming.Value;
+            Featherline.Settings.ShuffleCount = (int) timingShuffles.Value;
+            Featherline.Settings.TimingTestFavDirectly = (bool) testOnInitial.Checked;
+            Featherline.Settings.Checkpoints = checkpoints.Text.Split("\n");
+            Featherline.Settings.Favorite = initialInputs.Text;
+            Featherline.Settings.ManualHitboxes = customHitboxes.Text.Split("\n");
+
+            Featherline.Settings.Population = FeatherlineSettings.Instance.Population;
+            Featherline.Settings.SurvivorCount = FeatherlineSettings.Instance.GenerationSurvivors;
+            Featherline.Settings.MutationMagnitude = FeatherlineSettings.Instance.MutationMagnitude;
+            Featherline.Settings.MaxMutChangeCount = FeatherlineSettings.Instance.MaxMutations;
+            Featherline.Settings.FrameBasedOnly = FeatherlineSettings.Instance.FrameOnly;
+            Featherline.Settings.AvoidWalls = FeatherlineSettings.Instance.DisallowWall;
+
+            Task.Run(() => {
+                try {
+                    bool runEnd = GAManager.RunAlgorithm(false);
+                    if (runEnd) {
+                        GAManager.EndAlgorithm();
+                    }
+                    GAManager.ClearAlgorithmData();
+                    running = false;
+                    Application.Instance.Invoke(() => {
+                        progressDialog.Close();
+                        output.Text = Featherline.Settings.Output;
+
+                        if (Featherline.Settings.Output != "") {
+                            copyOutput.Enabled = true;
+                        } else {
+                            copyOutput.Enabled = false;
+                        }
+
+                        run.Text = "Run";
+                        run.Enabled = true;
+                        getInfo.Enabled = true;
+                        
+                        MessageBox.Show("Done! You can now copy the inputs into your TAS.");
+                    });
+                } catch (Exception ex) {
+                    Console.Error.WriteLine("Failed to run Featherline:");
+                    Console.Error.WriteLine(ex);
+                    Application.Instance.Invoke(() => {
+                        progressDialog.stop.Text = "Close";
+                        run.Enabled = true;
+                        getInfo.Enabled = true;
+                        Featherline.Settings.TextReporter.Report("Error!");
+                    });
+                    MessageBox.Show($"Failed to run Featherline: {ex}", MessageBoxType.Error);
+                }
+            });
+        } else {
+            GAManager.abortAlgorithm = true;
+            
+            run.Enabled = true;
+            getInfo.Enabled = true;
+        }
     }
 }
 
@@ -195,5 +281,34 @@ public sealed class FeatherlineHelpForm : Form {
         Content = scrollable;
         Resizable = false;
         Load += (_, _) => Studio.Instance.WindowCreationCallback(this);
+    }
+}
+
+// TODO: add progress dialog
+public sealed class FeatherlineProgressDialog : Eto.Forms.Dialog {
+    private readonly Label text;
+    private readonly ProgressBar progress;
+    public Button stop;
+
+    public Progress<string> textReporter;
+    public Progress<int> progressReporter;
+    public FeatherlineProgressDialog() {
+        Title = "Featherline - Progress";
+        Icon = Assets.AppIcon;
+        var layout = new DynamicLayout { DefaultSpacing = new Size(10, 10) };
+        text = new Label { Text = "placeholder" };
+        textReporter = new(e => Application.Instance.Invoke(() => text.Text = e));
+        progress = new();
+        progressReporter = new(e => Application.Instance.Invoke(() => progress.Value = e));
+        stop = new Button((_, _) => Close()) { Text = "Abort", Height = 20 };
+        layout.BeginVertical();
+        layout.Add(text);
+        layout.Add(progress);
+        layout.Add(stop);
+        layout.EndVertical();
+        Content = new Panel { Content = layout, Width = 250, Height = 100, Padding = 10 };
+        Resizable = false;
+        Load += (_, _) => Studio.Instance.WindowCreationCallback(this);
+        ShowInTaskbar = true;
     }
 }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
@@ -6,16 +6,14 @@
         <Nullable>enable</Nullable>
 
         <Version>3.0.0</Version>
-
-        <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Eto.Forms" Version="2.8.3"/>
+        <PackageReference Include="Eto.Forms" Version="2.8.3" />
         <PackageReference Include="Samboy063.Tomlet" Version="5.3.1" />
+        <ProjectReference Include="..\..\StudioCommunication\StudioCommunication.csproj" />
+        <ProjectReference Include="..\..\external\Featherline\Featherline.csproj" />
     </ItemGroup>
-
-    <Import Project="..\..\StudioCommunication\StudioCommunication.targets" />
     
     <ItemGroup>
         <EmbeddedResource Include="Assets\Icon.ico" LogicalName="Icon.ico"/>

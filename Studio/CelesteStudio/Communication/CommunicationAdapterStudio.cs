@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CelesteStudio.Util;
-using MemoryPack;
 using StudioCommunication;
 using StudioCommunication.Util;
 
@@ -17,6 +16,8 @@ public sealed class CommunicationAdapterStudio(
     Action<Dictionary<HotkeyID, List<WinFormsKeys>>> bindingsChanged) : CommunicationAdapterBase(Location.Studio) 
 {
     private readonly EnumDictionary<GameDataType, object?> gameData = new();
+    private readonly EnumDictionary<GameDataType, bool> gameDataPending = new();
+    private Type? rawInfoTargetType;
     
     public void ForceReconnect() {
         if (Connected) {
@@ -91,7 +92,16 @@ public sealed class CommunicationAdapterStudio(
                     case GameDataType.InvokeCommandAutoCompleteEntries:
                         gameData[gameDataType] = reader.ReadObject<CommandAutoCompleteEntry[]>();
                         break;
+                    
+                    case GameDataType.RawInfo:
+                        gameData[gameDataType] = reader.ReadObject(rawInfoTargetType!);
+                        break;
+                    
+                    case GameDataType.GameState:
+                        gameData[gameDataType] = reader.ReadObject<GameState?>();
+                        break;
                 }
+                gameDataPending[gameDataType] = false;
                 
                 LogVerbose($"Received message GameDataResponse: {gameDataType} = '{gameData[gameDataType]}'");
                 break;
@@ -116,7 +126,9 @@ public sealed class CommunicationAdapterStudio(
     public void SendSetting(string settingName, object? value) {
         QueueMessage(MessageID.SetSetting, writer => {
             writer.Write(settingName);
-            writer.WriteObject(value);
+            if (value != null) {
+                writer.WriteObject(value);
+            }
         });
         LogVerbose($"Sent message SetSetting: '{settingName}' = '{value}");
     }
@@ -134,13 +146,13 @@ public sealed class CommunicationAdapterStudio(
     }
 
     private static readonly TimeSpan DefaultRequestTimeout = TimeSpan.FromSeconds(1);
-    public async Task<object?> RequestGameData(GameDataType gameDataType, object? arg = null, TimeSpan? timeout = null) {
+    public async Task<object?> RequestGameData(GameDataType gameDataType, object? arg = null, TimeSpan? timeout = null, Type? type = null) {
         timeout ??= DefaultRequestTimeout;
         
-        if (gameData[gameDataType] != null) {
+        if (gameDataPending[gameDataType]) {
             // Wait for another request to finish
             var waitStart = DateTime.UtcNow;
-            while (gameData[gameDataType] == null) {
+            while (gameDataPending[gameDataType]) {
                 await Task.Delay(UpdateRate).ConfigureAwait(false);
                 
                 if (DateTime.UtcNow - waitStart >= timeout) {
@@ -148,6 +160,13 @@ public sealed class CommunicationAdapterStudio(
                     return null;
                 }
             }
+        }
+        
+        // Block other requests of this type until this is done
+        gameDataPending[gameDataType] = true;
+        
+        if (gameDataType == GameDataType.RawInfo) {
+            rawInfoTargetType = type;
         }
         
         QueueMessage(MessageID.RequestGameData, writer => {
@@ -160,20 +179,17 @@ public sealed class CommunicationAdapterStudio(
         
         // Wait for data to arrive
         var start = DateTime.UtcNow;
-        while (gameData[gameDataType] == null) {
+        while (gameDataPending[gameDataType]) {
             await Task.Delay(UpdateRate).ConfigureAwait(false);
             
             if (DateTime.UtcNow - start >= timeout) {
                 LogError("Timed-out while requesting data from game");
+                gameDataPending[gameDataType] = false;
                 return null;
             }
         }
         
-        // Reset back for next request
-        var data = gameData[gameDataType];
-        gameData[gameDataType] = null;
-        
-        return data;
+        return gameData[gameDataType];
     }
     
     protected override void LogInfo(string message) => Console.WriteLine($"[Info] Studio Communication @ Studio: {message}");
