@@ -6,7 +6,7 @@ namespace StudioCommunication;
 public partial struct StudioState() {
     public int CurrentLine = -1;
     public string CurrentLineSuffix = string.Empty;
-    public int CurrentFrameInTas = -1;
+    public int CurrentFrameInTAS = -1;
     public int TotalFrames = 0;
     public int SaveStateLine = -1;
     public States tasStates = States.None;

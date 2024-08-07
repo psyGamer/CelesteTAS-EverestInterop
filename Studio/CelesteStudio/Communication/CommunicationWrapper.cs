@@ -126,7 +126,7 @@ public static class CommunicationWrapper {
     
     public static int CurrentLine => Connected ? state.CurrentLine : -1;
     public static string CurrentLineSuffix => Connected ? state.CurrentLineSuffix : string.Empty;
-    public static int CurrentFrameInTas => Connected ? state.CurrentFrameInTas : -1;
+    public static int CurrentFrameInTas => Connected ? state.CurrentFrameInTAS : -1;
     public static int TotalFrames => Connected ? state.TotalFrames : -1;
     public static int SaveStateLine => Connected ? state.SaveStateLine : -1;
     public static States TasStates => Connected ? state.tasStates : States.None;
