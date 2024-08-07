@@ -43,8 +43,7 @@ public partial record Command {
         return args.Select(text => text.Trim()).ToArray();
     }
 
-    public static bool TryParse(InputController inputController, string filePath, int fileLine, string lineText, int frame, int studioLine,
-        out Command command) {
+    public static bool TryParse(string filePath, int fileLine, string lineText, int frame, int studioLine, out Command command) {
         command = null;
         string error = $"Failed to parse command \"{lineText.Trim()}\" at line {fileLine} of the file \"{filePath}\"";
         try {
@@ -82,13 +81,6 @@ public partial record Command {
                     commandCall.Invoke();
                     Parsing = false;
                 }
-
-                // TODO:
-                // if (!inputController.Commands.TryGetValue(frame, out List<Command> commands)) {
-                //     inputController.Commands[frame] = commands = new List<Command>();
-                // }
-
-                // commands.Add(command);
 
                 return true;
             }

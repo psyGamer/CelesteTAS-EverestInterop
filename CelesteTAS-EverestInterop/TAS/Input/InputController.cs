@@ -38,6 +38,7 @@ public class InputController {
     private static readonly Dictionary<string, FileSystemWatcher> watchers = new();
 
     public readonly List<InputFrame> Inputs = [];
+    public readonly SortedDictionary<int, List<Command>> Commands = new();
     public readonly SortedDictionary<int, FastForward> FastForwards = new();
     public readonly SortedDictionary<int, FastForward> FastForwardLabels = new();
 
@@ -48,6 +49,8 @@ public class InputController {
     public int CurrentFrameInTAS { get; private set; } = 0;
     public int CurrentFrameInInput { get; private set; } = 0;
     public int CurrentParsingFrame => Inputs.Count;
+
+    public List<Command> CurrentCommands => Commands.GetValueOrDefault(CurrentFrameInTAS) ?? [];
 
     public FastForward? CurrentFastForward => NextLabelFastForward ??
                                                FastForwards.FirstOrDefault(pair => pair.Key > CurrentFrameInTAS).Value ??
@@ -148,18 +151,17 @@ public class InputController {
 
     /// Moves the controller 1 frame forward, updating inputs and triggering commands
     public void AdvanceFrame() {
-        // if (CurrentCommands != null) {
-        //     foreach (var command in CurrentCommands) {
-        //         if (command.Attribute.ExecuteTiming.Has(ExecuteTiming.Runtime) &&
-        //             (!EnforceLegalCommand.EnabledWhenRunning || command.Attribute.LegalInMainGame)) {
-        //             command.Invoke();
-        //         }
-        //
-        //         // SaveAndQuitReenter inserts inputs, so we can't continue executing the commands
-        //         // It already handles the moving of all following commands
-        //         if (command.Attribute.Name == "SaveAndQuitReenter") break;
-        //     }
-        // }
+        foreach (var command in CurrentCommands) {
+            if (command.Attribute.ExecuteTiming.Has(ExecuteTiming.Runtime) &&
+                (!EnforceLegalCommand.EnabledWhenRunning || command.Attribute.LegalInMainGame))
+            {
+                command.Invoke();
+            }
+
+            // SaveAndQuitReenter inserts inputs, so we can't continue executing the commands
+            // It already handles the moving of all following commands
+            if (command.Attribute.Name == "SaveAndQuitReenter") break;
+        }
 
         if (!CanPlayback) {
             return;
@@ -198,41 +200,15 @@ public class InputController {
 
     /// Parses the lines and adds the inputs / commands to the TAS
     public void ReadLines(IEnumerable<string> lines, string path, int startLine, int studioLine, int repeatIndex, int repeatCount, bool lockStudioLine = false) {
-        int subLine = 0;
+        int fileLine = 0;
         foreach (string readLine in lines) {
-            subLine++;
-            if (subLine < startLine) {
+            fileLine++;
+            if (fileLine < startLine) {
                 continue;
             }
 
-            string lineText = readLine.Trim();
-
-            if (Command.TryParse(this, path, subLine, lineText, CurrentParsingFrame, studioLine, out Command command) &&
-                command.Is("Play")) {
-                // workaround for the play command
-                // the play command needs to stop reading the current file when it's done to prevent recursion
+            if (!ReadLine(readLine, path, fileLine, studioLine, repeatIndex, repeatCount)) {
                 return;
-            }
-
-            if (lineText.StartsWith("***")) {
-                var fastForward = new FastForward(CurrentParsingFrame, lineText.Substring("***".Length), studioLine);
-                if (FastForwards.TryGetValue(CurrentParsingFrame, out var oldFastForward) && oldFastForward.SaveState && !fastForward.SaveState) {
-                    // ignore
-                } else {
-                    FastForwards[CurrentParsingFrame] = fastForward;
-                }
-            } else if (lineText.StartsWith("#")) {
-                // A label need to start with a # and immediately follow with the text
-                if (lineText.Length >= 2 && lineText[0] == '#' && char.IsLetter(lineText[1])) {
-                    FastForwardLabels[CurrentParsingFrame] = new FastForward(CurrentParsingFrame, "", studioLine);
-                }
-
-                // if (!Comments.TryGetValue(path, out var comments)) {
-                //     Comments[path] = comments = new List<Comment>();
-                // }
-                // comments.Add(new Comment(path, CurrentParsingFrame, subLine, lineText));
-            } else if (!AutoInputCommand.TryInsert(path, lineText, studioLine, repeatIndex, repeatCount)) {
-                AddFrames(lineText, studioLine, repeatIndex, repeatCount);
             }
 
             if (path == FilePath && !lockStudioLine) {
@@ -240,10 +216,49 @@ public class InputController {
             }
         }
 
-        // Add a hidden label at the end, to fast-forward to the end of the file
+        // Add a hidden label at the of the text block
         if (path == FilePath) {
             FastForwardLabels[CurrentParsingFrame] = new FastForward(CurrentParsingFrame, "", studioLine);
         }
+    }
+
+    /// Parses the line and adds the inputs / commands to the TAS
+    public bool ReadLine(string line, string path, int fileLine, int studioLine, int repeatIndex = 0, int repeatCount = 0) {
+        string lineText = line.Trim();
+
+        if (Command.TryParse(path, fileLine, lineText, CurrentParsingFrame, studioLine, out Command command)) {
+            if (!Commands.TryGetValue(CurrentParsingFrame, out var commands)) {
+                Commands[CurrentParsingFrame] = commands = new List<Command>();
+            }
+            commands.Add(command);
+
+            if (command.Is("Play")) {
+                // Workaround for the 'Play' command:
+                // It needs to stop reading the current file when it's done to prevent recursion
+                return false;
+            }
+        } else if (lineText.StartsWith("***")) {
+            var fastForward = new FastForward(CurrentParsingFrame, lineText.Substring("***".Length), studioLine);
+            if (FastForwards.TryGetValue(CurrentParsingFrame, out var oldFastForward) && oldFastForward.SaveState && !fastForward.SaveState) {
+                // ignore
+            } else {
+                FastForwards[CurrentParsingFrame] = fastForward;
+            }
+        } else if (lineText.StartsWith("#")) {
+            // A label need to start with a # and immediately follow with the text
+            if (lineText.Length >= 2 && lineText[0] == '#' && char.IsLetter(lineText[1])) {
+                FastForwardLabels[CurrentParsingFrame] = new FastForward(CurrentParsingFrame, "", studioLine);
+            }
+
+            // if (!Comments.TryGetValue(path, out var comments)) {
+            //     Comments[path] = comments = new List<Comment>();
+            // }
+            // comments.Add(new Comment(path, CurrentParsingFrame, subLine, lineText));
+        } else if (!AutoInputCommand.TryInsert(path, lineText, studioLine, repeatIndex, repeatCount)) {
+            AddFrames(lineText, studioLine, repeatIndex, repeatCount);
+        }
+
+        return true;
     }
 
     /// Parses the input line and adds it to the TAS
@@ -278,7 +293,7 @@ public class InputController {
         Manager.NextState = Manager.State.Running;
     }
 
-    /// Stops execution of the current TAS
+    /// Stops execution of the current TAS and resets state
     public void Stop() {
         CurrentFrameInTAS = 0;
         CurrentFrameInInput = 0;
@@ -288,6 +303,9 @@ public class InputController {
     /// Clears all parsed data for the current TAS
     public void Clear() {
         Inputs.Clear();
+        Commands.Clear();
+        FastForwards.Clear();
+        FastForwardLabels.Clear();
 
         foreach (var watcher in watchers.Values) {
             watcher.Dispose();
@@ -296,6 +314,7 @@ public class InputController {
         usedFiles.Clear();
 
         checksum = InvalidChecksum;
+        needsReload = true;
     }
 
     /// Create file-system-watchers for all TAS-files used, to detect changes
@@ -345,11 +364,11 @@ public class InputController {
         for (int i = 0; i < upToFrame; i++) {
             hash.Add(Inputs[i]);
 
-            // if (Commands.GetValueOrDefault(i) is { } commands) {
-            //     foreach (Command command in commands.Where(command => command.Attribute.CalcChecksum)) {
-            //         result.AppendLine(command.LineText);
-            //     }
-            // }
+            if (Commands.GetValueOrDefault(i) is { } commands) {
+                foreach (var command in commands.Where(command => command.Attribute.CalcChecksum)) {
+                    hash.Add(command.LineText);
+                }
+            }
         }
 
         return hash.ToHashCode();
@@ -359,16 +378,16 @@ public class InputController {
         InputController clone = new();
 
         clone.Inputs.AddRange(Inputs);
-        // clone.FastForwards.AddRange((IDictionary) FastForwards);
-        // clone.FastForwardComments.AddRange((IDictionary) FastForwardComments);
+        clone.FastForwards.AddRange((IDictionary) FastForwards);
+        clone.FastForwardLabels.AddRange((IDictionary) FastForwardLabels);
 
         // foreach (string filePath in Comments.Keys) {
         //     clone.Comments[filePath] = new List<Comment>(Comments[filePath]);
         // }
 
-        // foreach (int frame in Commands.Keys) {
-        //     clone.Commands[frame] = new List<Command>(Commands[frame]);
-        // }
+        foreach (int frame in Commands.Keys) {
+            clone.Commands[frame] = [..Commands[frame]];
+        }
 
         clone.needsReload = needsReload;
         foreach (var file in usedFiles) {
