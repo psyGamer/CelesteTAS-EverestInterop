@@ -42,7 +42,7 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
                 string path = reader.ReadString();
                 LogVerbose($"Received message FilePath: '{path}'");
 
-                Manager.Controller.FilePath = path;
+                Manager.AddMainThreadAction(() => Manager.Controller.FilePath = path);
                 break;
 
             case MessageID.Hotkey:
@@ -209,32 +209,34 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
             return;
         }
 
-        Manager.Controller.RefreshInputs();
-        if (RecordingCommand.RecordingTimes.IsNotEmpty()) {
-            AbortTas("Can't use StartRecording/StopRecording with \"Record TAS\"");
-            return;
-        }
-        Manager.EnableRun();
+        Manager.AddMainThreadAction(() => {
+            Manager.Controller.RefreshInputs();
+            if (RecordingCommand.RecordingTimes.IsNotEmpty()) {
+                AbortTas("Can't use StartRecording/StopRecording with \"Record TAS\"");
+                return;
+            }
+            Manager.EnableRun();
 
-        int totalFrames = Manager.Controller.Inputs.Count;
-        if (totalFrames <= 0) return;
+            int totalFrames = Manager.Controller.Inputs.Count;
+            if (totalFrames <= 0) return;
 
-        TASRecorderUtils.StartRecording(fileName);
-        TASRecorderUtils.SetDurationEstimate(totalFrames);
+            TASRecorderUtils.StartRecording(fileName);
+            TASRecorderUtils.SetDurationEstimate(totalFrames);
 
-        // TODO
-        // if (!Manager.Controller.Commands.TryGetValue(0, out var commands)) return;
-        // bool startsWithConsoleLoad = commands.Any(c =>
-        //     c.Attribute.Name.Equals("Console", StringComparison.OrdinalIgnoreCase) &&
-        //     c.Args.Length >= 1 &&
-        //     ConsoleCommand.LoadCommandRegex.Match(c.Args[0].ToLower()) is {Success: true});
+            // TODO
+            // if (!Manager.Controller.Commands.TryGetValue(0, out var commands)) return;
+            // bool startsWithConsoleLoad = commands.Any(c =>
+            //     c.Attribute.Name.Equals("Console", StringComparison.OrdinalIgnoreCase) &&
+            //     c.Args.Length >= 1 &&
+            //     ConsoleCommand.LoadCommandRegex.Match(c.Args[0].ToLower()) is {Success: true});
 
-        // if (startsWithConsoleLoad) {
-        //     // Restart the music when we enter the level
-        //     Audio.SetMusic(null, startPlaying: false, allowFadeOut: false);
-        //     Audio.SetAmbience(null, startPlaying: false);
-        //     Audio.BusStopAll(Buses.GAMEPLAY, immediate: true);
-        // }
+            // if (startsWithConsoleLoad) {
+            //     // Restart the music when we enter the level
+            //     Audio.SetMusic(null, startPlaying: false, allowFadeOut: false);
+            //     Audio.SetAmbience(null, startPlaying: false);
+            //     Audio.BusStopAll(Buses.GAMEPLAY, immediate: true);
+            // }
+        });
     }
 
     protected override void LogInfo(string message) => Logger.Log(LogLevel.Info, "CelesteTAS/StudioCom", message);
