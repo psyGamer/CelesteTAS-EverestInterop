@@ -2,6 +2,7 @@
 
 using System;
 using Celeste.Mod;
+using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Utils;
@@ -26,7 +27,7 @@ internal static class LogUtil {
 
     public static void LogException(this Exception e, string header, LogLevel logLevel = LogLevel.Warn) {
         header.Log(logLevel);
-        e.LogDetailed();
+        Logger.LogDetailed(e);
     }
 
     public static void Log(this object text, LogLevel logLevel = LogLevel.Info) {

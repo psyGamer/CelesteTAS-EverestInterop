@@ -41,7 +41,7 @@ public static class EvalLuaCommand {
 
                 method.IlHook((cursor, _) => {
                     // insert codes after "rawCommand.Split(new[] {' ', ','}, StringSplitOptions.RemoveEmptyEntries);"
-                    if (cursor.TryGotoNext(MoveType.After, instr => instr.MatchCallvirt<string>("Split"))) {
+                    if (cursor.TryGotoNext(MoveType.After, ins => ins.MatchCallvirt<string>("Split"))) {
                         cursor.Emit(OpCodes.Ldloc_0).EmitDelegate<Func<string[], string, string[]>>(
                             (commandAndArgs, rawCommand) => {
                                 if (commandAndArgs[0].ToLower() == commandName && commandAndArgs.Length >= 2) {
@@ -67,7 +67,7 @@ public static class EvalLuaCommand {
             return null;
         }
     }
-    
+
     public static void Log(object message) {
         if (consoleCommandRunning) {
             Engine.Commands.Log(message);
