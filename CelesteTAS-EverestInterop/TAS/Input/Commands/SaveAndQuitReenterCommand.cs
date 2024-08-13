@@ -1,10 +1,6 @@
-using System.Collections.Generic;
 using System.Reflection;
 using Celeste;
-using Celeste.Mod;
-using Mono.Cecil.Cil;
 using Monocle;
-using MonoMod.Utils;
 using TAS.Module;
 using TAS.Utils;
 
@@ -27,25 +23,24 @@ public static class SaveAndQuitReenterCommand {
         }
     }
 
-    // Contains which slot was used for each command, to ensure that inputs before the current frame stay the same
-    public static Dictionary<int, int> InsertedSlots = new();
-
     [Load]
     private static void Load() {
         FieldInfo fieldInfo = typeof(SaveAndQuitReenterCommand).GetFieldInfo(nameof(justPressedSnQ));
 
+        // Set justPressedSnQ to true when button is pressed
         typeof(Level)
             .GetNestedType("<>c__DisplayClass149_0", BindingFlags.NonPublic)
             .GetMethodInfo("<Pause>b__8")
-            .IlHook((cursor, _) => cursor.Emit(OpCodes.Ldc_I4_1).Emit(OpCodes.Stsfld,fieldInfo));
+            .IlHook((cursor, _) => cursor
+                .EmitLdcI4(/*true*/ 1)
+                .EmitStsfld(fieldInfo));
 
-        typeof(Level).GetMethod("Update").IlHook((cursor, _) => cursor.Emit(OpCodes.Ldc_I4_0)
-            .Emit(OpCodes.Stsfld, fieldInfo));
-    }
-
-    [ClearInputs]
-    private static void Clear() {
-        InsertedSlots.Clear();
+        // Reset justPressedSnQ back to false
+        typeof(Level)
+            .GetMethod("Update")
+            .IlHook((cursor, _) => cursor
+                .EmitLdcI4(/*false*/ 0)
+                .EmitStsfld(fieldInfo));
     }
 
     [DisableRun]
@@ -59,12 +54,6 @@ public static class SaveAndQuitReenterCommand {
 
         if (ParsingCommand) {
             int slot = ActiveFileSlot;
-            if (InsertedSlots.TryGetValue(studioLine, out int prevSlot)) {
-                slot = prevSlot;
-            } else {
-                InsertedSlots[studioLine] = slot;
-            }
-
             bool safe = SafeCommand.DisallowUnsafeInputParsing;
             if (safe) {
                 controller.ReadLine("Unsafe", filePath, fileLine, studioLine);
@@ -108,21 +97,13 @@ public static class SaveAndQuitReenterCommand {
                 AbortTas("SaveAndQuitReenter must be exactly after pressing the \"Save & Quit\" button");
                 return;
             }
-
-            if (Engine.Scene is not Level level) {
+            if (Engine.Scene is not Level) {
                 AbortTas("SaveAndQuitReenter can't be used outside levels");
                 return;
             }
 
-            // Re-insert inputs of the save file slot changed
-            if (InsertedSlots.TryGetValue(studioLine, out int slot) && slot != ActiveFileSlot) {
-                InsertedSlots[studioLine] = ActiveFileSlot;
-                // Avoid clearing our InsertedSlots info when RefreshInputs()
-                Dictionary<int, int> backup = new(InsertedSlots);
-                controller.RefreshInputs(forceRefresh: true);
-                InsertedSlots.Clear();
-                InsertedSlots.AddRange(backup);
-            }
+            // Ensure the inputs are for the current save slot
+            controller.RefreshInputs(forceRefresh: true);
         }
     }
 }
