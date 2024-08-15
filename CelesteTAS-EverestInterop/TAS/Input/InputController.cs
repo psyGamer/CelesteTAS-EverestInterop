@@ -11,19 +11,22 @@ using Command = TAS.Input.Commands.Command;
 namespace TAS.Input;
 
 [AttributeUsage(AttributeTargets.Method), MeansImplicitUse]
-internal class ClearInputsAttribute : Attribute;
+internal class ParseFileEndAttribute : Attribute;
 
 [AttributeUsage(AttributeTargets.Method), MeansImplicitUse]
-internal class ParseFileEndAttribute : Attribute;
+internal class ClearInputsAttribute : Attribute;
 
 #nullable enable
 
 /// Manages inputs, commands, etc. for the current TAS file
 public class InputController {
     static InputController() {
-        AttributeUtils.CollectMethods<ClearInputsAttribute>();
         AttributeUtils.CollectMethods<ParseFileEndAttribute>();
+        AttributeUtils.CollectMethods<ClearInputsAttribute>();
     }
+
+    public static event Action OnParseFileEnd = AttributeUtils.Invoke<ParseFileEndAttribute>;
+    public static event Action OnClearInputs = AttributeUtils.Invoke<ClearInputsAttribute>;
 
     private readonly Dictionary<string, FileSystemWatcher> watchers = new();
 
@@ -125,7 +128,7 @@ public class InputController {
             } else {
                 needsReload = false;
                 StartWatchers();
-                AttributeUtils.Invoke<ParseFileEndAttribute>();
+                OnParseFileEnd.Invoke();
 
                 if (!firstRun && lastChecksum != Checksum) {
                     MetadataCommands.UpdateRecordCount(this);
@@ -309,6 +312,8 @@ public class InputController {
 
         checksum = InvalidChecksum;
         needsReload = true;
+
+        OnClearInputs.Invoke();
     }
 
     /// Create file-system-watchers for all TAS-files used, to detect changes

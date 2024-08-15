@@ -36,20 +36,22 @@ public static class Manager {
         SlowForward,
     }
 
+    static Manager() {
+        AttributeUtils.CollectMethods<EnableRunAttribute>();
+        AttributeUtils.CollectMethods<DisableRunAttribute>();
+    }
+
+    public static event Action OnEnableRun = AttributeUtils.Invoke<EnableRunAttribute>;
+    public static event Action OnDisableRun = AttributeUtils.Invoke<DisableRunAttribute>;
+
     public static bool Running => CurrState != State.Disabled;
     public static bool FastForwarding => Running && PlaybackSpeed >= 5.0f;
     public static float PlaybackSpeed { get; private set; } = 1.0f;
 
     public static State CurrState, NextState;
-
     public static readonly InputController Controller = new();
 
     private static readonly ConcurrentQueue<Action> mainThreadActions = new();
-
-    static Manager() {
-        AttributeUtils.CollectMethods<EnableRunAttribute>();
-        AttributeUtils.CollectMethods<DisableRunAttribute>();
-    }
 
 #if DEBUG
     // Hot-reloading support
@@ -87,7 +89,7 @@ public static class Manager {
         CurrState = NextState = State.Running;
         PlaybackSpeed = 1.0f;
 
-        AttributeUtils.Invoke<EnableRunAttribute>();
+        OnEnableRun.Invoke();
         Controller.Stop();
         Controller.RefreshInputs();
     }
@@ -102,8 +104,8 @@ public static class Manager {
         Environment.StackTrace.Log(LogLevel.Verbose);
 
         CurrState = NextState = State.Disabled;
-        AttributeUtils.Invoke<DisableRunAttribute>();
         Controller.Stop();
+        OnDisableRun.Invoke();
     }
 
     /// Will start the TAS on the next update cycle
