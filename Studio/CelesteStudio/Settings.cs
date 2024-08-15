@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using CelesteStudio.Data;
 using CelesteStudio.Editing;
+using CelesteStudio.Editing.AutoCompletion;
 using CelesteStudio.Util;
 using Eto;
 using Eto.Drawing;
 using Eto.Forms;
-using StudioCommunication.Util;
 using Tomlet;
 using Tomlet.Attributes;
 using Tomlet.Exceptions;
@@ -88,6 +88,7 @@ public sealed class Settings {
     public string FontFamily { get; set; } = FontManager.FontFamilyBuiltin;
     public float EditorFontSize { get; set; } = 12.0f;
     public float StatusFontSize { get; set; } = 10.0f;
+    public float PopupFontSize { get; set; } = 10.0f;
     
     #endregion
     #region Preferences
@@ -242,9 +243,37 @@ public sealed class Settings {
         
         if (File.Exists(SettingsPath)) {
             try {
-                Instance = TomletMain.To<Settings>(TomlParser.ParseFile(SettingsPath), new TomlSerializerOptions());
+                var toml = TomlParser.ParseFile(SettingsPath);
+                Instance = TomletMain.To<Settings>(toml, new TomlSerializerOptions());
                 Instance.KeyBindings = Instance._keyBindings.ToDictionary(pair => Enum.Parse<MenuEntry>(pair.Key), pair => pair.Value);
 
+                // Apply default values if fields are missing in a theme
+                var customThemes = toml.GetSubTable(nameof(CustomThemes));
+                foreach (var (themeName, themeFields) in customThemes.Entries) {
+                    if (themeFields is not TomlTable themeTable) {
+                        continue;
+                    }
+                    
+                    var currentTheme = Instance.CustomThemes[themeName];
+                    var fallbackTheme = currentTheme.DarkMode
+                        ? Theme.BuiltinThemes["Dark"]
+                        : Theme.BuiltinThemes["Light"];
+
+                    // Need to box the theme, since it's a struct
+                    var currentThemeBox = (object)currentTheme;
+                    
+                    foreach (var field in typeof(Theme).GetFields(BindingFlags.Public | BindingFlags.Instance)) {
+                        if (!themeTable.ContainsKey(field.Name)) {
+                            var fallbackValue = field.GetValue(fallbackTheme);
+                            field.SetValue(currentThemeBox, fallbackValue);
+                            
+                            Console.WriteLine($"Warning: Custom theme '{themeName}' is missing field '{field.Name}'! Defaulting to {fallbackValue}");
+                        }    
+                    }
+                    
+                    Instance.CustomThemes[themeName] = (Theme)currentThemeBox;
+                }
+                
                 OnChanged();
                 OnThemeChanged();
                 OnFontChanged();

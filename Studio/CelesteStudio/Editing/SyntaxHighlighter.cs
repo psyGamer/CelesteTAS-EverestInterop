@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using CelesteStudio.Util;
 using Eto.Drawing;
 using StudioCommunication;
@@ -41,7 +40,7 @@ public class SyntaxHighlighter {
 
     public SyntaxHighlighter(Font regularFont, Font boldFont, Font italicFont, Font boldItalicFont) {
         LoadTheme(Settings.Instance.Theme);
-        Settings.ThemeChanged += () => LoadTheme(Settings.Instance.Theme);;
+        Settings.ThemeChanged += () => LoadTheme(Settings.Instance.Theme);
 
         this.regularFont = regularFont;
         this.boldFont = boldFont;

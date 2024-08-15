@@ -21,6 +21,10 @@ public enum MenuEntry {
     Editor_InsertRoomName, Editor_InsertCurrentTime, Editor_RemoveAllTimestamps, Editor_InsertModInfo, Editor_InsertConsoleLoadCommand, Editor_InsertSimpleConsoleLoadCommand,
     Editor_SwapSelectedLR, Editor_SwapSelectedJK, Editor_SwapSelectedXC, Editor_CombineConsecutiveSameInputs, Editor_ForceCombineInputFrames, Editor_SplitFrames,
     Editor_OpenReadFileGoToPlayLine,
+    Editor_OpenAutoCompleteMenu, Editor_OpenContextActionsMenu,
+    
+    ContextActions_InlineReadCommand, ContextActions_InlineRepeatCommand, ContextActions_CreateRepeatCommand, ContextActions_SwapActionsLR, ContextActions_SwapActionsJK, ContextActions_SwapActionsXC,
+    ContextActions_CombineConsecutiveSameInputs, ContextActions_ForceCombineInputFrames, ContextActions_SplitFrames, ContextActions_OpenReadFile, ContextActions_GoToPlayLine,
     
     Status_CopyGameInfoToClipboard, Status_ReconenctStudioCeleste,
     Status_EditCustomInfoTemplate, Status_ClearWatchEntityInfo,
@@ -29,7 +33,7 @@ public enum MenuEntry {
     
     Game_Start, Game_Restart, Game_FrameAdvance, Game_Pause,
 }
-public enum MenuEntryCategory { File, Settings, View, Editor, Status, StatusPopout, GameHotkeys }
+public enum MenuEntryCategory { File, Settings, View, Editor, ContextActions, Status, StatusPopout, GameHotkeys }
 
 public static class MenuEntryExtensions {
     private static readonly Dictionary<MenuEntry, Keys> DefaultKeyBindings = new() {
@@ -80,6 +84,20 @@ public static class MenuEntryExtensions {
         { MenuEntry.Editor_ForceCombineInputFrames, Application.Instance.CommonModifier | Keys.Shift | Keys.L },
         { MenuEntry.Editor_SplitFrames, Keys.None },
         { MenuEntry.Editor_OpenReadFileGoToPlayLine, Keys.None },
+        { MenuEntry.Editor_OpenAutoCompleteMenu, Application.Instance.CommonModifier | Keys.Space },
+        { MenuEntry.Editor_OpenContextActionsMenu, Application.Instance.AlternateModifier | Keys.Enter },
+        
+        { MenuEntry.ContextActions_InlineReadCommand, Keys.None },
+        { MenuEntry.ContextActions_InlineRepeatCommand, Keys.None },
+        { MenuEntry.ContextActions_CreateRepeatCommand, Keys.None },
+        { MenuEntry.ContextActions_SwapActionsLR, Keys.None },
+        { MenuEntry.ContextActions_SwapActionsJK, Keys.None },
+        { MenuEntry.ContextActions_SwapActionsXC, Keys.None },
+        { MenuEntry.ContextActions_CombineConsecutiveSameInputs, Application.Instance.CommonModifier | Keys.L },
+        { MenuEntry.ContextActions_ForceCombineInputFrames, Application.Instance.CommonModifier | Keys.Shift | Keys.L },
+        { MenuEntry.ContextActions_SplitFrames, Keys.None },
+        { MenuEntry.ContextActions_OpenReadFile, Keys.None },
+        { MenuEntry.ContextActions_GoToPlayLine, Keys.None },
         
         { MenuEntry.Status_CopyGameInfoToClipboard, Application.Instance.CommonModifier | Keys.Shift | Keys.C },
         { MenuEntry.Status_ReconenctStudioCeleste, Application.Instance.CommonModifier | Keys.Shift | Keys.D },
@@ -141,6 +159,20 @@ public static class MenuEntryExtensions {
         { MenuEntry.Editor_ForceCombineInputFrames, "Force Combine Input Frames" },
         { MenuEntry.Editor_SplitFrames, "Split Input Frames" },
         { MenuEntry.Editor_OpenReadFileGoToPlayLine, "Open Read File / Go To Play Line" },
+        { MenuEntry.Editor_OpenAutoCompleteMenu, "Open Auto Complete menu..." },
+        { MenuEntry.Editor_OpenContextActionsMenu, "Open Context Actions menu..." },
+        
+        { MenuEntry.ContextActions_InlineReadCommand, "Inline Read-command" },
+        { MenuEntry.ContextActions_InlineRepeatCommand, "Inline Repeat-command" },
+        { MenuEntry.ContextActions_CreateRepeatCommand, "Create Repeat-command" },
+        { MenuEntry.ContextActions_SwapActionsLR, "Swap L and R" },
+        { MenuEntry.ContextActions_SwapActionsJK, "Swap J and K" },
+        { MenuEntry.ContextActions_SwapActionsXC, "Swap X and C" },
+        { MenuEntry.ContextActions_CombineConsecutiveSameInputs, "Combine Consecutive Same Inputs" },
+        { MenuEntry.ContextActions_ForceCombineInputFrames, "Force Combine Input Frames" },
+        { MenuEntry.ContextActions_SplitFrames, "Split Input Frames" },
+        { MenuEntry.ContextActions_OpenReadFile, "Open Read File" },
+        { MenuEntry.ContextActions_GoToPlayLine, "Go To Play Line" },
         
         { MenuEntry.Status_CopyGameInfoToClipboard, "&Copy Game Info to Clipboard" },
         { MenuEntry.Status_ReconenctStudioCeleste, "&Reconnect Studio and Celeste" },
@@ -173,7 +205,12 @@ public static class MenuEntryExtensions {
             MenuEntry.Editor_InsertRemoveBreakpoint, MenuEntry.Editor_InsertRemoveSavestateBreakpoint, MenuEntry.Editor_RemoveAllUncommentedBreakpoints, MenuEntry.Editor_RemoveAllBreakpoints, MenuEntry.Editor_CommentUncommentAllBreakpoints, MenuEntry.Editor_CommentUncommentInputs, MenuEntry.Editor_CommentUncommentText,
             MenuEntry.Editor_InsertRoomName, MenuEntry.Editor_InsertCurrentTime, MenuEntry.Editor_RemoveAllTimestamps, MenuEntry.Editor_InsertModInfo, MenuEntry.Editor_InsertConsoleLoadCommand, MenuEntry.Editor_InsertSimpleConsoleLoadCommand,
             MenuEntry.Editor_SwapSelectedLR, MenuEntry.Editor_SwapSelectedJK, MenuEntry.Editor_SwapSelectedXC, MenuEntry.Editor_CombineConsecutiveSameInputs, MenuEntry.Editor_ForceCombineInputFrames, MenuEntry.Editor_SplitFrames,
-            MenuEntry.Editor_OpenReadFileGoToPlayLine] },
+            MenuEntry.Editor_OpenReadFileGoToPlayLine,
+            MenuEntry.Editor_OpenAutoCompleteMenu, MenuEntry.Editor_OpenContextActionsMenu] },
+        
+        { MenuEntryCategory.ContextActions, [
+            MenuEntry.ContextActions_InlineReadCommand, MenuEntry.ContextActions_InlineRepeatCommand, MenuEntry.ContextActions_CreateRepeatCommand, MenuEntry.ContextActions_SwapActionsLR, MenuEntry.ContextActions_SwapActionsJK, MenuEntry.ContextActions_SwapActionsXC,
+            MenuEntry.ContextActions_CombineConsecutiveSameInputs, MenuEntry.ContextActions_ForceCombineInputFrames, MenuEntry.ContextActions_SplitFrames, MenuEntry.ContextActions_OpenReadFile, MenuEntry.ContextActions_GoToPlayLine] },
 
         { MenuEntryCategory.Status, [
             MenuEntry.Status_CopyGameInfoToClipboard, MenuEntry.Status_ReconenctStudioCeleste,
@@ -215,6 +252,7 @@ public static class MenuEntryExtensions {
         MenuEntryCategory.Settings => "Settings",
         MenuEntryCategory.View => "View",
         MenuEntryCategory.Editor => "Editor - Context Menu",
+        MenuEntryCategory.ContextActions => "Context Actions",
         MenuEntryCategory.Status => "Status - Context Menu",
         MenuEntryCategory.StatusPopout => "Status Popout - Context Menu",
         MenuEntryCategory.GameHotkeys => "Game Hotkeys",

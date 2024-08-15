@@ -54,19 +54,11 @@ public class GameInfoPanel : Panel {
     }
 
     private sealed class SubpixelIndicator : Drawable {
-        // Cached to avoid spamming GameDataRequest messages
-        // TODO: Have the game notify such settings changes
-        private int decimals = CommunicationWrapper.GetSubpixelIndicatorDecimals();
-
-        public SubpixelIndicator() {
-            CommunicationWrapper.ConnectionChanged += () => decimals = CommunicationWrapper.GetSubpixelIndicatorDecimals();
-        }
-
         protected override void OnPaint(PaintEventArgs e) {
             var remainder = CommunicationWrapper.SubpixelRemainder;
 
-            float subpixelLeft = (float)Math.Round(remainder.X + 0.5f, decimals, MidpointRounding.AwayFromZero);
-            float subpixelTop = (float)Math.Round(remainder.Y + 0.5f, decimals, MidpointRounding.AwayFromZero);
+            float subpixelLeft = (float)Math.Round(remainder.X + 0.5f, CommunicationWrapper.GameSettings.SubpixelIndicatorDecimals, MidpointRounding.AwayFromZero);
+            float subpixelTop = (float)Math.Round(remainder.Y + 0.5f, CommunicationWrapper.GameSettings.SubpixelIndicatorDecimals, MidpointRounding.AwayFromZero);
             float subpixelRight = 1.0f - subpixelLeft;
             float subpixelBottom = 1.0f - subpixelTop;
 
@@ -74,7 +66,7 @@ public class GameInfoPanel : Panel {
 
             const float indicatorPadding = 8.0f;
             const float rectPadding = 5.0f;
-            float textWidth = font.MeasureWidth("0.".PadRight(decimals + 2, '0'));
+            float textWidth = font.MeasureWidth("0.".PadRight(CommunicationWrapper.GameSettings.SubpixelIndicatorDecimals + 2, '0'));
             float textHeight = font.LineHeight();
 
             float rectSize = textHeight * Settings.Instance.SubpixelIndicatorScale;
@@ -83,11 +75,11 @@ public class GameInfoPanel : Panel {
 
             int hDecimals = Math.Abs(remainder.X) switch {
                 0.5f => 0,
-                _ => decimals
+                _ => CommunicationWrapper.GameSettings.SubpixelIndicatorDecimals
             };
             int vDecimals = Math.Abs(remainder.Y) switch {
                 0.5f => 0,
-                _ => decimals
+                _ => CommunicationWrapper.GameSettings.SubpixelIndicatorDecimals
             };
 
             string left = subpixelLeft.ToFormattedString(hDecimals);
@@ -159,7 +151,7 @@ public class GameInfoPanel : Panel {
             };
 
             textArea.TextChanged += (_, _) => {
-                int lineCount = textArea.Text.ReplaceLineEndings(Document.NewLine.ToString()).Count(c => c == Document.NewLine) + 1;;
+                int lineCount = textArea.Text.ReplaceLineEndings(Document.NewLine.ToString()).Count(c => c == Document.NewLine) + 1;
                 textArea.Height = (int)((lineCount + 1) * textArea.Font.LineHeight()) + 2;
 
                 UpdateLayout();
@@ -360,7 +352,7 @@ public class GameInfoPanel : Panel {
             Studio.Instance.RecalculateLayout();
         };
         textArea.TextChanged += (_, _) => {
-            int lineCount = textArea.Text.ReplaceLineEndings(Document.NewLine.ToString()).Count(c => c == Document.NewLine) + 1;;
+            int lineCount = textArea.Text.ReplaceLineEndings(Document.NewLine.ToString()).Count(c => c == Document.NewLine) + 1;
             textArea.Height = (int)((lineCount + 1) * textArea.Font.LineHeight()) + 2;
 
             UpdateLayout();

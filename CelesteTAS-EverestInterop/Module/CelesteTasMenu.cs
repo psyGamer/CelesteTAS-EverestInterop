@@ -6,6 +6,7 @@ using Celeste;
 using Celeste.Mod;
 using Microsoft.Xna.Framework;
 using Monocle;
+using StudioCommunication;
 using TAS.Communication;
 using TAS.EverestInterop;
 using TAS.EverestInterop.Hitboxes;
@@ -124,29 +125,34 @@ internal static class CelesteTasMenu {
 
     private static EaseInSubMenu CreateRoundValuesSubMenu() {
         return new EaseInSubMenu("Round Values".ToDialogText(), false).Apply(subMenu => {
-            subMenu.Add(new TextMenuExt.IntSlider("Position Decimals".ToDialogText(), CelesteTasSettings.MinDecimals,
-                CelesteTasSettings.MaxDecimals, TasSettings.PositionDecimals).Change(value =>
+            subMenu.Add(new TextMenuExt.IntSlider("Position Decimals".ToDialogText(), GameSettings.MinDecimals,
+                GameSettings.MaxDecimals, TasSettings.PositionDecimals).Change(value =>
                 TasSettings.PositionDecimals = value));
-            subMenu.Add(new TextMenuExt.IntSlider("Speed Decimals".ToDialogText(), CelesteTasSettings.MinDecimals,
-                CelesteTasSettings.MaxDecimals, TasSettings.SpeedDecimals).Change(value =>
+            subMenu.Add(new TextMenuExt.IntSlider("Speed Decimals".ToDialogText(), GameSettings.MinDecimals,
+                GameSettings.MaxDecimals, TasSettings.SpeedDecimals).Change(value =>
                 TasSettings.SpeedDecimals = value));
-            subMenu.Add(new TextMenuExt.IntSlider("Velocity Decimals".ToDialogText(), CelesteTasSettings.MinDecimals,
-                CelesteTasSettings.MaxDecimals, TasSettings.VelocityDecimals).Change(value =>
+            subMenu.Add(new TextMenuExt.IntSlider("Velocity Decimals".ToDialogText(), GameSettings.MinDecimals,
+                GameSettings.MaxDecimals, TasSettings.VelocityDecimals).Change(value =>
                 TasSettings.VelocityDecimals = value));
-            subMenu.Add(new TextMenuExt.IntSlider("Angle Decimals".ToDialogText(), CelesteTasSettings.MinDecimals,
-                CelesteTasSettings.MaxDecimals, TasSettings.AngleDecimals).Change(value =>
+            subMenu.Add(new TextMenuExt.IntSlider("Angle Decimals".ToDialogText(), GameSettings.MinDecimals,
+                GameSettings.MaxDecimals, TasSettings.AngleDecimals).Change(value =>
                 TasSettings.AngleDecimals = value));
-            subMenu.Add(new TextMenuExt.IntSlider("Custom Info Decimals".ToDialogText(), CelesteTasSettings.MinDecimals,
-                CelesteTasSettings.MaxDecimals, TasSettings.CustomInfoDecimals).Change(value =>
+            subMenu.Add(new TextMenuExt.IntSlider("Custom Info Decimals".ToDialogText(), GameSettings.MinDecimals,
+                GameSettings.MaxDecimals, TasSettings.CustomInfoDecimals).Change(value =>
                 TasSettings.CustomInfoDecimals = value));
             subMenu.Add(new TextMenuExt.IntSlider("Subpixel Indicator Decimals".ToDialogText(), 1,
-                CelesteTasSettings.MaxDecimals, TasSettings.SubpixelIndicatorDecimals).Change(value =>
+                GameSettings.MaxDecimals, TasSettings.SubpixelIndicatorDecimals).Change(value =>
                 TasSettings.SubpixelIndicatorDecimals = value));
             subMenu.Add(new TextMenuExt.EnumerableSlider<SpeedUnit>("Speed Unit".ToDialogText(), new[] {
-                    new KeyValuePair<SpeedUnit, string>(SpeedUnit.PixelPerSecond, "Pixel Per Second".ToDialogText()),
-                    new KeyValuePair<SpeedUnit, string>(SpeedUnit.PixelPerFrame, "Pixel Per Frame".ToDialogText())
+                    new KeyValuePair<SpeedUnit, string>(SpeedUnit.PixelPerSecond, "Pixel per Second".ToDialogText()),
+                    new KeyValuePair<SpeedUnit, string>(SpeedUnit.PixelPerFrame, "Pixel per Frame".ToDialogText())
                 }, TasSettings.SpeedUnit)
                 .Change(value => TasSettings.SpeedUnit = value));
+            subMenu.Add(new TextMenuExt.EnumerableSlider<SpeedUnit>("Velocity Unit".ToDialogText(), new[] {
+                    new KeyValuePair<SpeedUnit, string>(SpeedUnit.PixelPerSecond, "Pixel per Second".ToDialogText()),
+                    new KeyValuePair<SpeedUnit, string>(SpeedUnit.PixelPerFrame, "Pixel per Frame".ToDialogText())
+                }, TasSettings.VelocityUnit)
+                .Change(value => TasSettings.VelocityUnit = value));
         });
     }
 
