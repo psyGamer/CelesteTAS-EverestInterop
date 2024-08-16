@@ -7,7 +7,9 @@ using Celeste.Pico8;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod;
 using StudioCommunication;
+using System.Reflection;
 using TAS.Communication;
 using TAS.EverestInterop;
 using TAS.Input;
@@ -22,6 +24,7 @@ internal class EnableRunAttribute : Attribute;
 [AttributeUsage(AttributeTargets.Method), MeansImplicitUse]
 internal class DisableRunAttribute : Attribute;
 
+/// Main controller, which manages how the TAS is played back
 public static class Manager {
     public enum State {
         /// No TAS is currently active
@@ -43,6 +46,13 @@ public static class Manager {
 
     public static event Action OnEnableRun = AttributeUtils.Invoke<EnableRunAttribute>;
     public static event Action OnDisableRun = AttributeUtils.Invoke<DisableRunAttribute>;
+
+    // Running was originally a field, but is now a property
+    // Some mods still reference it as a field and this is a fallback for those mods to use
+    // This needs to be access via reflection, since otherwise the non-renamed fields would be tried to access
+    [ForceName("Running")]
+    public static bool __ABI_Compat_Running;
+    private static readonly FieldInfo f_Running = typeof(Manager).GetField("Running", BindingFlags.Public | BindingFlags.Static)!;
 
     public static bool Running => CurrState != State.Disabled;
     public static bool FastForwarding => Running && PlaybackSpeed >= 5.0f;
@@ -89,9 +99,12 @@ public static class Manager {
         CurrState = NextState = State.Running;
         PlaybackSpeed = 1.0f;
 
-        OnEnableRun.Invoke();
         Controller.Stop();
         Controller.RefreshInputs();
+        OnEnableRun.Invoke();
+
+        // This needs to happen after EnableRun, otherwise the input state will be reset in BindingHelper.SetTasBindings
+        Savestates.EnableRun();
     }
 
     public static void DisableRun()
@@ -101,7 +114,6 @@ public static class Manager {
         }
 
         "Stopping TAS".Log();
-        Environment.StackTrace.Log(LogLevel.Verbose);
 
         CurrState = NextState = State.Disabled;
         Controller.Stop();
@@ -123,10 +135,13 @@ public static class Manager {
         }
 
         CurrState = NextState;
+        f_Running.SetValue(null, Running);
 
         while (mainThreadActions.TryDequeue(out Action action)) {
             action.Invoke();
         }
+
+        Savestates.Update();
 
         if (Running && CurrState != State.Paused && !IsLoading()) {
             if (Controller.HasFastForward) {
@@ -151,6 +166,8 @@ public static class Manager {
     /// Updates everything around the TAS itself, like hotkeys, studio-communication, etc.
     public static void UpdateMeta() {
         Hotkeys.Update();
+        Savestates.UpdateMeta();
+
         SendStudioState();
 
         // Check if the TAS should be enabled / disabled
@@ -242,7 +259,7 @@ public static class Manager {
         };
     }
 
-    private static void SendStudioState() {
+    internal static void SendStudioState() {
         var remainder = Vector2.Zero;
         if (Engine.Scene is Level level && level.GetPlayer() is { } player) {
             remainder = player.movementCounter;

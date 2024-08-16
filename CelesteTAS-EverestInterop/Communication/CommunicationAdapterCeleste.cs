@@ -198,19 +198,21 @@ public void WriteSettings(GameSettings settings) {
             TASRecorderUtils.StartRecording(fileName);
             TASRecorderUtils.SetDurationEstimate(totalFrames);
 
-            // TODO
-            // if (!Manager.Controller.Commands.TryGetValue(0, out var commands)) return;
-            // bool startsWithConsoleLoad = commands.Any(c =>
-            //     c.Attribute.Name.Equals("Console", StringComparison.OrdinalIgnoreCase) &&
-            //     c.Args.Length >= 1 &&
-            //     ConsoleCommand.LoadCommandRegex.Match(c.Args[0].ToLower()) is {Success: true});
+            if (!Manager.Controller.Commands.TryGetValue(0, out var commands)) {
+                return;
+            }
 
-            // if (startsWithConsoleLoad) {
-            //     // Restart the music when we enter the level
-            //     Audio.SetMusic(null, startPlaying: false, allowFadeOut: false);
-            //     Audio.SetAmbience(null, startPlaying: false);
-            //     Audio.BusStopAll(Buses.GAMEPLAY, immediate: true);
-            // }
+            bool startsWithConsoleLoad = commands.Any(c =>
+                c.Attribute.Name.Equals("Console", StringComparison.OrdinalIgnoreCase) &&
+                c.Args.Length >= 1 &&
+                ConsoleCommand.LoadCommandRegex.Match(c.Args[0].ToLower()) is {Success: true});
+
+            if (startsWithConsoleLoad) {
+                // Restart the music when we enter the level
+                Audio.SetMusic(null, startPlaying: false, allowFadeOut: false);
+                Audio.SetAmbience(null, startPlaying: false);
+                Audio.BusStopAll(Buses.GAMEPLAY, immediate: true);
+            }
         });
     }
 

@@ -53,7 +53,7 @@ public class InputController {
     public FastForward? NextLabelFastForward;
 
     /// Indicates whether the current TAS file needs to be re-parsed before running
-    private bool needsReload = true;
+    public bool NeedsReload = true;
 
     /// All files involved in the current TAS
     private readonly HashSet<string> usedFiles = [];
@@ -110,7 +110,7 @@ public class InputController {
 
     /// Re-parses the TAS file if necessary
     public void RefreshInputs(bool forceRefresh = false) {
-        if (!needsReload && !forceRefresh) {
+        if (!NeedsReload && !forceRefresh) {
             return; // Already up-to-date
         }
 
@@ -126,7 +126,7 @@ public class InputController {
                 Clear();
                 Manager.DisableRun();
             } else {
-                needsReload = false;
+                NeedsReload = false;
                 StartWatchers();
                 OnParseFileEnd.Invoke();
 
@@ -145,6 +145,9 @@ public class InputController {
     /// Moves the controller 1 frame forward, updating inputs and triggering commands
     public void AdvanceFrame() {
         RefreshInputs();
+
+        $"Advance TAS: {CurrentFrameInTAS}".Log();
+        Environment.StackTrace.Log(LogLevel.Verbose);
 
         foreach (var command in CurrentCommands) {
             if (command.Attribute.ExecuteTiming.Has(ExecuteTiming.Runtime) &&
@@ -295,6 +298,7 @@ public class InputController {
         CurrentFrameInTAS = 0;
         CurrentFrameInInput = 0;
         NextLabelFastForward = null;
+        Console.WriteLine($"Resettting to {CurrentFrameInTAS} / {CurrentFrameInInput}");
     }
 
     /// Clears all parsed data for the current TAS
@@ -311,7 +315,7 @@ public class InputController {
         usedFiles.Clear();
 
         checksum = InvalidChecksum;
-        needsReload = true;
+        NeedsReload = true;
 
         OnClearInputs.Invoke();
     }
@@ -355,12 +359,12 @@ public class InputController {
 
         void OnTasFileChanged(object sender, FileSystemEventArgs e) {
             $"TAS file changed: {e.FullPath} - {e.ChangeType}".Log(LogLevel.Verbose);
-            needsReload = true;
+            NeedsReload = true;
         }
     }
 
     /// Calculate a checksum until the specified frame
-    private int CalcChecksum(int upToFrame) {
+    public int CalcChecksum(int upToFrame) {
         var hash = new HashCode();
         hash.Add(filePath);
 
@@ -380,8 +384,9 @@ public class InputController {
     public InputController Clone() {
         InputController clone = new();
 
-        clone.Inputs.AddRange(Inputs);
+        clone.filePath = filePath;
 
+        clone.Inputs.AddRange(Inputs);
         foreach ((int line, var fastForward) in FastForwards) {
             clone.FastForwards.Add(line, fastForward);
         }
@@ -397,7 +402,7 @@ public class InputController {
             clone.Commands[frame] = [..Commands[frame]];
         }
 
-        clone.needsReload = needsReload;
+        clone.NeedsReload = NeedsReload;
         foreach (var file in usedFiles) {
             clone.usedFiles.Add(file);
         }
@@ -415,5 +420,6 @@ public class InputController {
     public void CopyProgressFrom(InputController other) {
         CurrentFrameInTAS = other.CurrentFrameInTAS;
         CurrentFrameInInput = other.CurrentFrameInInput;
+        Console.WriteLine($"Setting to {CurrentFrameInTAS} / {CurrentFrameInInput}");
     }
 }

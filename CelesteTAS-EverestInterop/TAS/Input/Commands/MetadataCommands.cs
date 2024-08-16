@@ -53,40 +53,39 @@ public static class MetadataCommands {
         TasStartFileTime = null;
     }
 
-    [TasCommand("RecordCount", AliasNames = new[] {"RecordCount:", "RecordCount："}, CalcChecksum = false)]
+    [TasCommand("RecordCount", AliasNames = ["RecordCount:", "RecordCount："], CalcChecksum = false)]
     private static void RecordCountCommand() {
         // dummy
     }
 
-    [TasCommand("FileTime", AliasNames = new[] {"FileTime:", "FileTime："}, CalcChecksum = false)]
+    [TasCommand("FileTime", AliasNames = ["FileTime:", "FileTime："], CalcChecksum = false)]
     private static void FileTimeCommand() {
         // dummy
     }
 
-    [TasCommand("ChapterTime", AliasNames = new[] {"ChapterTime:", "ChapterTime："}, CalcChecksum = false)]
+    [TasCommand("ChapterTime", AliasNames = ["ChapterTime:", "ChapterTime："], CalcChecksum = false)]
     private static void ChapterTimeCommand() {
         // dummy
     }
 
-    [TasCommand("MidwayFileTime", AliasNames = new[] {"MidwayFileTime:", "MidwayFileTime："}, CalcChecksum = false)]
+    [TasCommand("MidwayFileTime", AliasNames = ["MidwayFileTime:", "MidwayFileTime："], CalcChecksum = false)]
     private static void MidwayFileTimeCommand() {
         if (TasStartFileTime != null && SaveData.Instance != null) {
-            // TODO
-            // UpdateAllMetadata("MidwayFileTime",
-            //     _ => GameInfo.FormatTime(SaveData.Instance.Time - TasStartFileTime.Value),
-            //     command => Manager.Controller.CurrentCommands.Contains(command));
+            UpdateAllMetadata("MidwayFileTime",
+                _ => GameInfo.FormatTime(SaveData.Instance.Time - TasStartFileTime.Value),
+                command => Manager.Controller.CurrentCommands.Contains(command));
         }
     }
 
-    [TasCommand("MidwayChapterTime", AliasNames = new[] {"MidwayChapterTime:", "MidwayChapterTime："}, CalcChecksum = false)]
+    [TasCommand("MidwayChapterTime", AliasNames = ["MidwayChapterTime:", "MidwayChapterTime："], CalcChecksum = false)]
     private static void MidwayChapterTimeCommand() {
         if (!Manager.Running || Engine.Scene is not Level level || !level.Session.StartedFromBeginning) {
             return;
         }
-        // TODO
-        // UpdateAllMetadata("MidwayChapterTime",
-        //     _ => GameInfo.GetChapterTime(level),
-        //     command => Manager.Controller.CurrentCommands.Contains(command));
+
+        UpdateAllMetadata("MidwayChapterTime",
+            _ => GameInfo.GetChapterTime(level),
+            command => Manager.Controller.CurrentCommands.Contains(command));
     }
 
     private static void UpdateChapterTime(Level level) {
@@ -105,42 +104,44 @@ public static class MetadataCommands {
     }
 
     private static void UpdateAllMetadata(string commandName, Func<Command, string> getMetadata, Func<Command, bool> predicate = null) {
-        // TODO
-        // InputController inputController = Manager.Controller;
-        // string tasFilePath = Manager.Controller.FilePath;
-        // IEnumerable<Command> metadataCommands = inputController.Commands.SelectMany(pair => pair.Value)
-        //     .Where(command => command.Is(commandName) && command.FilePath == Manager.Controller.FilePath)
-        //     .Where(predicate ?? (_ => true))
-        //     .ToList();
-        //
-        // Dictionary<int, string> updateLines = metadataCommands.Where(command => {
-        //     string metadata = getMetadata(command);
-        //     if (metadata.IsNullOrEmpty()) {
-        //         return false;
-        //     }
-        //
-        //     if (command.Args.Length > 0 && command.Args[0] == metadata) {
-        //         return false;
-        //     }
-        //
-        //     return true;
-        // }).ToDictionary(command => command.StudioLineNumber, command => $"{command.Attribute.Name}: {getMetadata(command)}");
-        //
-        // if (updateLines.IsEmpty()) {
-        //     return;
-        // }
-        //
-        // string[] allLines = File.ReadAllLines(tasFilePath);
-        // int allLinesLength = allLines.Length;
-        // foreach (int lineNumber in updateLines.Keys) {
-        //     if (lineNumber >= 0 && lineNumber < allLinesLength) {
-        //         allLines[lineNumber] = updateLines[lineNumber];
-        //     }
-        // }
-        //
-        // bool needsReload = Manager.Controller.NeedsReload;
-        // File.WriteAllLines(tasFilePath, allLines);
-        // Manager.Controller.NeedsReload = needsReload;
-        // CommunicationWrapper.SendUpdateLines(updateLines);
+        string tasFilePath = Manager.Controller.FilePath;
+        var metadataCommands = Manager.Controller.Commands.SelectMany(pair => pair.Value)
+            .Where(command => command.Is(commandName) && command.FilePath == Manager.Controller.FilePath)
+            .Where(predicate ?? (_ => true))
+            .ToList();
+
+        var updateLines = metadataCommands
+            .Where(command => {
+                string metadata = getMetadata(command);
+                if (metadata.IsNullOrEmpty()) {
+                    return false;
+                }
+
+                if (command.Args.Length > 0 && command.Args[0] == metadata) {
+                    return false;
+                }
+
+                return true;
+            })
+            .ToDictionary(command => command.StudioLineNumber, command => $"{command.Attribute.Name}: {getMetadata(command)}");
+
+        if (updateLines.IsEmpty()) {
+            return;
+        }
+
+        string[] allLines = File.ReadAllLines(tasFilePath);
+        int allLinesLength = allLines.Length;
+        foreach ((int lineNumber, string replacement) in updateLines) {
+            if (lineNumber >= 0 && lineNumber < allLinesLength) {
+                allLines[lineNumber] = replacement;
+            }
+        }
+
+        // Prevent a reload from being triggered by the file-system change
+        bool needsReload = Manager.Controller.NeedsReload;
+        File.WriteAllLines(tasFilePath, allLines);
+        Manager.Controller.NeedsReload = needsReload;
+
+        CommunicationWrapper.SendUpdateLines(updateLines);
     }
 }
