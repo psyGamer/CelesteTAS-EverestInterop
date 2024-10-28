@@ -49,6 +49,10 @@
         <PackageReference Include="JetBrains.Profiler.Api" Version="1.4.6" Condition="'$(Configuration)' == 'Debug'" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Source\" />
+    </ItemGroup>
+
     <Target Name="CopyFiles" AfterTargets="Build">
         <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="..\bin" />
         <Copy SourceFiles="$(OutputPath)$(AssemblyName).pdb" DestinationFolder="..\bin" />
